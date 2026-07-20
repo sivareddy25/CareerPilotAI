@@ -1,0 +1,96 @@
+# ---------------------------------------------------------------
+# CareerPilot AI — repository ignore rules
+# ---------------------------------------------------------------
+
+# ===================== .NET / C# ==============================
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]64/
+build/
+artifacts/
+publish/
+*.user
+*.suo
+*.userprefs
+*.dll
+*.pdb
+*.cache
+project.lock.json
+project.fragment.lock.json
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+# EF Core / local secrets
+*.db
+*.db-shm
+*.db-wal
+appsettings.*.local.json
+secrets.json
+
+# Test + coverage output
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.trx
+
+# ===================== Node / Angular =========================
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.eslintcache
+
+# ===================== Environment ============================
+.env
+.env.*
+!.env.example
+
+# ===================== VS Code ================================
+# Ignore the folder but keep the shared workspace config.
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.history/
+
+# ===================== JetBrains (Rider / WebStorm) ===========
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ===================== Docker =================================
+docker-compose.override.yml
+*.local.yml
+
+# ===================== macOS ==================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# ===================== Misc ===================================
+*.log
+*.bak
+*.swp
+Thumbs.db

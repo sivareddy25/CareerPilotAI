@@ -1,0 +1,35 @@
+# CareerPilot AI — API image (Phase 1 placeholder).
+#
+# Multi-stage: the SDK image compiles, the runtime image ships.
+# Build context is the REPOSITORY ROOT, not this folder:
+#   docker build -f docker/Dockerfile.api -t careerpilot-api .
+
+# ---- build ----
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy manifests first so `restore` is cached independently of source edits.
+COPY src/backend/CareerPilotAI.sln ./
+COPY src/backend/CareerPilot.Api/CareerPilot.Api.csproj                       CareerPilot.Api/
+COPY src/backend/CareerPilot.Application/CareerPilot.Application.csproj       CareerPilot.Application/
+COPY src/backend/CareerPilot.Domain/CareerPilot.Domain.csproj                 CareerPilot.Domain/
+COPY src/backend/CareerPilot.Infrastructure/CareerPilot.Infrastructure.csproj CareerPilot.Infrastructure/
+COPY src/backend/CareerPilot.Shared/CareerPilot.Shared.csproj                 CareerPilot.Shared/
+RUN dotnet restore CareerPilotAI.sln
+
+COPY src/backend/ ./
+RUN dotnet publish CareerPilot.Api/CareerPilot.Api.csproj \
+    -c Release -o /app/publish --no-restore
+
+# ---- runtime ----
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+WORKDIR /app
+
+# Run as the image's non-root user rather than root.
+USER $APP_UID
+
+ENV ASPNETCORE_HTTP_PORTS=8080
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "CareerPilot.Api.dll"]
