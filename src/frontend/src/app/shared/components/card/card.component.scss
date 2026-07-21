@@ -1,0 +1,44 @@
+@use 'styles/variables' as *;
+
+.card {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow $transition-normal, transform $transition-normal;
+  overflow: hidden;
+
+  &.hoverable:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  &-header {
+    padding: 1.25rem 1.5rem 0.5rem;
+  }
+
+  &-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  &-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  &-body {
+    padding: 1.25rem 1.5rem;
+  }
+
+  &-footer {
+    &:empty {
+      display: none;
+    }
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-secondary);
+  }
+}

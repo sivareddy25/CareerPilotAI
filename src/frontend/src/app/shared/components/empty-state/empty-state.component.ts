@@ -1,0 +1,30 @@
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+
+@Component({
+  selector: 'app-empty-state',
+  standalone: true,
+  template: `
+    <div class="empty-state">
+      <div class="empty-state-icon" aria-hidden="true">
+        <ng-content select="[icon]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+        </ng-content>
+      </div>
+      <h3 class="empty-state-title">{{ title() }}</h3>
+      @if (description()) {
+        <p class="empty-state-description">{{ description() }}</p>
+      }
+      <div class="empty-state-actions">
+        <ng-content select="[actions]" />
+      </div>
+    </div>
+  `,
+  styleUrl: './empty-state.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EmptyStateComponent {
+  readonly title = input.required<string>();
+  readonly description = input<string>();
+}

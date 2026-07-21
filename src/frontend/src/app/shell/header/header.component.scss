@@ -1,0 +1,47 @@
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+
+.app-header {
+  height: 4rem;
+  padding: 0 1.5rem;
+  background-color: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-color);
+  @include flex-between;
+  position: sticky;
+  top: 0;
+  z-index: $z-header;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+
+    .logo-badge {
+      padding: 0.125rem 0.375rem;
+      background-color: var(--brand-primary);
+      color: #ffffff;
+      font-size: 0.75rem;
+      border-radius: $radius-sm;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

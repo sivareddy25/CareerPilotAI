@@ -1,1 +1,8 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'styles/variables' as *;
+@use 'styles/colors' as *;
+@use 'styles/themes' as *;
+@use 'styles/typography' as *;
+@use 'styles/spacing' as *;
+@use 'styles/mixins' as *;
+@use 'styles/reset' as *;
+@use 'styles/accessibility' as *;
