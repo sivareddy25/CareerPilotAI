@@ -28,6 +28,12 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'onboarding',
+    loadComponent: () =>
+      import('./features/onboarding/onboarding-wizard.component').then((m) => m.OnboardingWizardComponent),
+    title: 'CareerPilot AI - First-Time Candidate Setup',
+  },
+  {
     path: '',
     component: AuthenticatedLayoutComponent,
     canActivate: [authGuard],

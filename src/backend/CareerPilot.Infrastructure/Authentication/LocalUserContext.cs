@@ -1,8 +1,7 @@
-using CareerPilot.Application.Abstractions.Persistence;
-
 namespace CareerPilot.Infrastructure.Authentication;
 
-public sealed class LocalUserContext : IUserContext
+/// <summary>Local-mode identity data used by desktop and development workflows.</summary>
+public sealed class LocalUserContext
 {
     public Guid UserId => LocalUserProvider.DefaultLocalUserId;
     public string Email => "local.user@careerpilot.internal";
