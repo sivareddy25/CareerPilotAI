@@ -1,0 +1,78 @@
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-fluent),
+              transform var(--duration-fast) var(--ease-fluent);
+
+  &:hover { transform: translateY(-2px); }
+  &.selected { border-color: var(--brand-primary); }
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+}
+
+.thumbnail {
+  // Aspect ratio of A4, so a miniature is proportionally honest about how much of the
+  // page the content fills.
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.thumbnail-inner {
+  // The renderer draws at a fixed 210mm width; scaling the whole thing down is what
+  // keeps every proportion — margins, type size, column split — faithful to the real
+  // page. Re-styling a smaller variant would show a layout that does not exist.
+  transform: scale(0.22);
+  transform-origin: top left;
+  width: 210mm;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.template-meta { padding: var(--space-3); }
+
+.template-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.template-name {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.template-description {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-card {
+    transition: none;
+    &:hover { transform: none; }
+  }
+}

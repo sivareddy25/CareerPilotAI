@@ -63,8 +63,12 @@ public static class WebApplicationExtensions
         //    what they may do. The order is mandatory — authorization inspects the
         //    principal that authentication produces, and reversing them means every
         //    request is evaluated as anonymous.
-        app.UseAuthentication();
-        app.UseAuthorization();
+        var hostingOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CareerPilot.Infrastructure.Configuration.HostingOptions>>().Value;
+        if (hostingOptions.IsSaaSMode)
+        {
+            app.UseAuthentication();
+            app.UseAuthorization();
+        }
 
         app.MapControllers();
 

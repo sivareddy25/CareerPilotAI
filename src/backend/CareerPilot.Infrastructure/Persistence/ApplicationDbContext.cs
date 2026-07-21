@@ -3,6 +3,7 @@ using CareerPilot.Domain.Abstractions;
 using CareerPilot.Domain.Entities;
 using CareerPilot.Domain.Entities.Identity;
 using CareerPilot.Domain.Entities.Profiles;
+using CareerPilot.Domain.Resumes;
 using CareerPilot.Infrastructure.Persistence.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -33,6 +34,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+
+    public DbSet<Resume> Resumes => Set<Resume>();
+
+    public DbSet<CareerPilot.Domain.Jobs.Entities.Job> Jobs => Set<CareerPilot.Domain.Jobs.Entities.Job>();
+
+    public DbSet<CareerPilot.Domain.Jobs.Entities.Company> Companies => Set<CareerPilot.Domain.Jobs.Entities.Company>();
+
+    public DbSet<CareerPilot.Domain.Jobs.Entities.JobSyncLog> JobSyncLogs => Set<CareerPilot.Domain.Jobs.Entities.JobSyncLog>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

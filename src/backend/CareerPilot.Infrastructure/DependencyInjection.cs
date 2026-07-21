@@ -6,6 +6,17 @@ using CareerPilot.Infrastructure.Persistence.Interceptors;
 using CareerPilot.Infrastructure.Persistence.Repositories;
 using CareerPilot.Infrastructure.Persistence.Seeding;
 using CareerPilot.Infrastructure.Storage;
+using CareerPilot.Infrastructure.Resumes;
+using CareerPilot.Infrastructure.Resumes.Export;
+using CareerPilot.Infrastructure.Resumes.Parsing;
+using CareerPilot.Infrastructure.Resumes.Templates;
+using CareerPilot.Infrastructure.Resumes.Rendering;
+using CareerPilot.Infrastructure.Jobs.Providers;
+using CareerPilot.Infrastructure.Jobs.Services;
+using CareerPilot.Application.Abstractions.Resumes;
+using CareerPilot.Application.Abstractions.Jobs;
+using CareerPilot.Application.Resumes;
+using CareerPilot.Application.Resumes.Services;
 using CareerPilot.Application.Abstractions.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,10 +25,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace CareerPilot.Infrastructure;
 
-/// <summary>
-/// Composition entry point for the Infrastructure layer.
-/// Registers DbContext pooling, PostgreSQL connections, interceptors, and persistence options.
-/// </summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
@@ -33,8 +40,29 @@ public static class DependencyInjection
         services.AddPersistenceInfrastructure(configuration);
         services.AddAuthenticationInfrastructure(configuration, environment);
         services.AddStorageInfrastructure();
+        services.AddResumeInfrastructure();
+        services.AddJobInfrastructure();
+        services.AddCommunicationInfrastructure();
+        services.AddSystemManagementInfrastructure();
 
         return services;
+    }
+
+    private static void AddSystemManagementInfrastructure(this IServiceCollection services)
+    {
+        services.AddScoped<CareerPilot.Application.Abstractions.System.ISystemHealthService, CareerPilot.Infrastructure.System.SystemHealthService>();
+        services.AddScoped<CareerPilot.Application.Abstractions.System.IBackupRestoreService, CareerPilot.Infrastructure.System.BackupRestoreService>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.System.IOllamaModelManagerService, CareerPilot.Infrastructure.System.OllamaModelManagerService>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.System.IUpdateCheckerService, CareerPilot.Infrastructure.System.UpdateCheckerService>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.System.IDiagnosticLogService, CareerPilot.Infrastructure.System.DiagnosticLogService>();
+    }
+
+    private static void AddCommunicationInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<CareerPilot.Application.Abstractions.Communication.IEmailProvider, CareerPilot.Infrastructure.Communication.Providers.Microsoft365EmailProvider>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.Communication.IEmailProvider, CareerPilot.Infrastructure.Communication.Providers.GoogleEmailProvider>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.Communication.IEmailClassificationService, CareerPilot.Infrastructure.Communication.Services.EmailClassificationService>();
+        services.AddSingleton<CareerPilot.Application.Abstractions.Communication.IReplyGenerationService, CareerPilot.Infrastructure.Communication.Services.ReplyGenerationService>();
     }
 
     private static void AddOptions(this IServiceCollection services, IConfiguration configuration)
@@ -45,16 +73,49 @@ public static class DependencyInjection
         services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.SectionName));
         services.Configure<PlaywrightOptions>(configuration.GetSection(PlaywrightOptions.SectionName));
         services.Configure<FileStorageOptions>(configuration.GetSection(FileStorageOptions.SectionName));
+        services.Configure<ResumeOptions>(configuration.GetSection(ResumeOptions.SectionName));
     }
 
-    /// <summary>
-    /// Binary storage. Singleton because the local provider is stateless once its root
-    /// path is resolved; a cloud provider swapped in here would share a client the same
-    /// way.
-    /// </summary>
     private static void AddStorageInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IFileStorageService, LocalFileStorageService>();
+    }
+
+    private static void AddResumeInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<IResumeTemplateCatalog, ResumeTemplateCatalog>();
+        services.AddSingleton<IResumeTemplateProvider, ResumeTemplateService>();
+        services.AddSingleton<IResumeRenderer, ResumeHtmlRenderer>();
+
+        services.AddSingleton<IResumeParser, PdfResumeParser>();
+        services.AddSingleton<IResumeParser, DocxResumeParser>();
+        services.AddSingleton<IResumeParser, JsonResumeParser>();
+        services.AddSingleton<IResumeParserRegistry, ResumeParserRegistry>();
+
+        services.AddSingleton<IResumeExporter, PdfResumeExporter>();
+        services.AddSingleton<IResumeExporter, DocxResumeExporter>();
+        services.AddSingleton<IResumeExporter, JsonResumeExporter>();
+        services.AddSingleton<IResumeExporterRegistry, ResumeExporterRegistry>();
+
+        services.AddSingleton<ResumeDocumentService>();
+        services.AddSingleton<TemplateService>();
+        services.AddSingleton<ResumeTemplateService>();
+        services.AddScoped<ResumeImportService>();
+        services.AddScoped<ResumeExportService>();
+    }
+
+    private static void AddJobInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<IJobProvider, GreenhouseJobProvider>();
+        services.AddSingleton<IJobProvider, LeverJobProvider>();
+        services.AddSingleton<IJobProvider, AshbyJobProvider>();
+        services.AddSingleton<IJobProvider, WorkdayJobProvider>();
+        services.AddSingleton<IJobProvider, SmartRecruitersJobProvider>();
+        services.AddSingleton<IJobProvider, CompanyCareerPageJobProvider>();
+        services.AddSingleton<IJobProviderRegistry, JobProviderRegistry>();
+
+        services.AddScoped<IJobNormalizationService, JobNormalizationService>();
+        services.AddScoped<IJobSynchronizationService, JobSynchronizationService>();
     }
 
     private static void AddPersistenceInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -98,6 +159,9 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        services.AddScoped<IResumeRepository, ResumeRepository>();
+        services.AddScoped<ICompanyRepository, CompanyRepository>();
+        services.AddScoped<IJobRepository, JobRepository>();
 
         services.AddScoped<IdentitySeeder>();
     }

@@ -1,0 +1,89 @@
+<app-page-header title="Resumes" subtitle="Import, preview and export your resumes.">
+  <app-button variant="primary" routerLink="/resumes/import">Import resumes</app-button>
+</app-page-header>
+
+@if (loading()) {
+  <div class="skeleton-grid">
+    @for (placeholder of [1, 2, 3]; track placeholder) {
+      <app-skeleton height="96px" />
+    }
+  </div>
+} @else if (error(); as message) {
+  <app-card>
+    <p class="list-error" role="alert">{{ message }}</p>
+  </app-card>
+} @else if (items().length === 0) {
+  <app-empty-state
+    icon="file-text"
+    title="No resumes yet"
+    description="Import a PDF, Word document or JSON export to get started."
+  >
+    <app-button actions variant="primary" routerLink="/resumes/import">Import resumes</app-button>
+  </app-empty-state>
+} @else {
+  <ul class="resume-grid">
+    @for (resume of items(); track resume.id) {
+      <li>
+        <app-card [hoverable]="true">
+          <div class="resume-row">
+            <button type="button" class="resume-main" (click)="open(resume.id)">
+              <span class="resume-title">{{ resume.title }}</span>
+              <span class="resume-meta">
+                <app-badge [variant]="isAtsSafe(resume.template) ? 'success' : 'warning'">
+                  {{ templateName(resume.template) }}
+                </app-badge>
+                @if (sourceLabel(resume.importedFrom); as source) {
+                  <span class="resume-source">{{ source }}</span>
+                }
+              </span>
+            </button>
+
+            <div class="resume-actions">
+              <app-button variant="ghost" size="sm" (btnClick)="openGallery(resume)">
+                Templates
+              </app-button>
+              <app-button variant="ghost" size="sm" (btnClick)="open(resume.id)">
+                Preview
+              </app-button>
+              <app-button variant="ghost" size="sm" (btnClick)="remove(resume)">
+                Delete
+              </app-button>
+            </div>
+          </div>
+        </app-card>
+      </li>
+    }
+  </ul>
+}
+
+@if (galleryFor(); as target) {
+  @if (galleryDocument(); as document) {
+    <div class="gallery-backdrop" (click)="galleryFor.set(null)">
+      <div
+        class="gallery-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="gallery-title"
+        (click)="$event.stopPropagation()"
+        (keydown.escape)="galleryFor.set(null)"
+      >
+        <div class="gallery-header">
+          <div>
+            <h2 id="gallery-title" class="gallery-title">Choose a template</h2>
+            <p class="gallery-subtitle">
+              Previewed with your own content — {{ target.title }}
+            </p>
+          </div>
+          <app-button variant="ghost" (btnClick)="galleryFor.set(null)">Close</app-button>
+        </div>
+
+        <app-template-gallery
+          [templates]="templates()"
+          [document]="document"
+          [selected]="target.template"
+          (templateChosen)="chooseTemplate($event)"
+        />
+      </div>
+    </div>
+  }
+}

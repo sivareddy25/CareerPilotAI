@@ -1,0 +1,141 @@
+<!--
+  One markup definition for every template. Nothing below is duplicated per template:
+  ordering comes from the descriptor, styling from CSS custom properties, and structural
+  variants (the Modern two-column grid) from the data-template attribute.
+-->
+<article class="resume-page" [attr.aria-label]="'Resume for ' + (document().contact.fullName || 'unnamed candidate')">
+  <header class="resume-header">
+    @if (document().contact.fullName) {
+      <h1 class="resume-name">{{ document().contact.fullName }}</h1>
+    }
+    @if (document().contact.headline) {
+      <p class="resume-headline">{{ document().contact.headline }}</p>
+    }
+    @if (contactParts().length > 0) {
+      <p class="resume-contact">
+        @for (part of contactParts(); track part; let last = $last) {
+          <span>{{ part }}</span>
+          @if (!last) { <span class="separator" aria-hidden="true">·</span> }
+        }
+      </p>
+    }
+  </header>
+
+  <div class="resume-body">
+    @for (section of sections(); track section) {
+      @switch (section) {
+        @case (Section.Summary) {
+          <section class="resume-section">
+            <h2 class="section-heading">Summary</h2>
+            <p class="section-paragraph">{{ document().summary }}</p>
+          </section>
+        }
+
+        @case (Section.Experience) {
+          <section class="resume-section">
+            <h2 class="section-heading">Experience</h2>
+            @for (role of document().experience; track $index) {
+              <div class="entry">
+                <h3 class="entry-title">{{ joinDefined(' — ', role.role, role.company) }}</h3>
+                @if (dateRange(role.startDate, role.endDate, role.isCurrent) || role.location) {
+                  <p class="entry-meta">
+                    {{ joinDefined(' · ', dateRange(role.startDate, role.endDate, role.isCurrent), role.location) }}
+                  </p>
+                }
+                @if (role.highlights.length > 0) {
+                  <ul class="entry-bullets">
+                    @for (highlight of role.highlights; track $index) {
+                      <li>{{ highlight }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        @case (Section.Education) {
+          <section class="resume-section">
+            <h2 class="section-heading">Education</h2>
+            @for (study of document().education; track $index) {
+              <div class="entry">
+                <h3 class="entry-title">{{ joinDefined(' — ', study.degree, study.institution) }}</h3>
+                <p class="entry-meta">
+                  {{ joinDefined(' · ', study.fieldOfStudy, dateRange(study.startDate, study.endDate), study.grade) }}
+                </p>
+              </div>
+            }
+          </section>
+        }
+
+        @case (Section.Skills) {
+          <section class="resume-section">
+            <h2 class="section-heading">Skills</h2>
+            @for (group of skillGroups(); track group.category) {
+              <p class="section-paragraph skill-group">
+                @if (group.category) { <strong>{{ group.category }}:</strong> }
+                {{ group.names.join(', ') }}
+              </p>
+            }
+          </section>
+        }
+
+        @case (Section.Projects) {
+          <section class="resume-section">
+            <h2 class="section-heading">Projects</h2>
+            @for (project of document().projects; track $index) {
+              <div class="entry">
+                <h3 class="entry-title">{{ project.name }}</h3>
+                @if (project.url) {
+                  <!-- noopener: these are user-supplied URLs, and without it the opened
+                       page can navigate this tab through window.opener. -->
+                  <p class="entry-meta">
+                    <a [href]="project.url" target="_blank" rel="noopener noreferrer">{{ project.url }}</a>
+                  </p>
+                }
+                @if (project.description) {
+                  <p class="section-paragraph">{{ project.description }}</p>
+                }
+                @if (project.highlights.length > 0) {
+                  <ul class="entry-bullets">
+                    @for (highlight of project.highlights; track $index) {
+                      <li>{{ highlight }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        @case (Section.Certifications) {
+          <section class="resume-section">
+            <h2 class="section-heading">Certifications</h2>
+            @for (certification of document().certifications; track $index) {
+              <div class="entry">
+                <h3 class="entry-title">{{ certification.name }}</h3>
+                <p class="entry-meta">
+                  {{ joinDefined(' · ', certification.issuer, certification.issuedDate) }}
+                </p>
+              </div>
+            }
+          </section>
+        }
+      }
+    }
+  </div>
+
+  @if (document().unparsedSections.length > 0) {
+    <!--
+      Content a parser kept but could not place. Shown, not hidden: import is lossy, and
+      a user can move a stray paragraph but cannot recover one that vanished silently.
+      Excluded from print so it never reaches an employer.
+    -->
+    <aside class="unparsed" aria-label="Content that could not be categorised">
+      <h2 class="section-heading">Not categorised</h2>
+      @for (text of document().unparsedSections; track $index) {
+        <p class="section-paragraph">{{ text }}</p>
+      }
+    </aside>
+  }
+</article>

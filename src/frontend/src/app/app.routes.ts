@@ -43,8 +43,78 @@ export const routes: Routes = [
         title: 'CareerPilot AI - Design System Infrastructure',
       },
       {
-        // The shell is loaded once and hosts every section, so switching tabs swaps
-        // only the child chunk rather than re-rendering the header and tab strip.
+        path: 'communication',
+        loadComponent: () =>
+          import('./features/communication/communication-hub.component').then((m) => m.CommunicationHubComponent),
+        title: 'CareerPilot AI - Smart Communication Hub',
+      },
+      {
+        path: 'system/settings',
+        loadComponent: () =>
+          import('./features/system/local-system-settings.component').then((m) => m.LocalSystemSettingsComponent),
+        title: 'CareerPilot AI - System Management & Health',
+      },
+      {
+        path: 'jobs',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/jobs/browser/job-browser.component').then(m => m.JobBrowserComponent),
+            title: 'CareerPilot AI - Job Ingestion Engine',
+          },
+          {
+            path: 'companies',
+            loadComponent: () => import('./features/jobs/company/company-details.component').then(m => m.CompanyDetailsComponent),
+            title: 'CareerPilot AI - Hiring Companies',
+          },
+          {
+            path: 'saved',
+            loadComponent: () => import('./features/jobs/saved/saved-jobs-placeholder.component').then(m => m.SavedJobsPlaceholderComponent),
+            title: 'CareerPilot AI - Saved Jobs',
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/jobs/details/job-details.component').then(m => m.JobDetailsComponent),
+            title: 'CareerPilot AI - Job Details',
+          },
+        ],
+      },
+      {
+        path: 'resumes',
+        children: [
+          {
+            path: 'templates',
+            loadComponent: () => import('./features/resumes/template-gallery/template-gallery.component').then(m => m.TemplateGalleryComponent),
+            title: 'CareerPilot AI - Resume Templates',
+          },
+          {
+            path: 'import',
+            loadComponent: () => import('./features/resumes/import-wizard/import-wizard.component').then(m => m.ImportWizardComponent),
+            title: 'CareerPilot AI - Import Resumes',
+          },
+          {
+            path: 'preview',
+            loadComponent: () => import('./features/resumes/resume-preview/resume-preview.component').then(m => m.ResumePreviewComponent),
+            title: 'CareerPilot AI - Live Resume Preview',
+          },
+          {
+            path: 'settings',
+            loadComponent: () => import('./features/resumes/template-settings/template-settings.component').then(m => m.TemplateSettingsComponent),
+            title: 'CareerPilot AI - Template Settings',
+          },
+          {
+            path: 'print',
+            loadComponent: () => import('./features/resumes/print-preview/print-preview.component').then(m => m.PrintPreviewComponent),
+            title: 'CareerPilot AI - Print Preview',
+          },
+          {
+            path: '',
+            redirectTo: 'templates',
+            pathMatch: 'full',
+          },
+        ],
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile-shell.component'),
         children: [

@@ -1,0 +1,123 @@
+:host { display: block; }
+
+.skeleton-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.list-error { margin: 0; color: var(--danger); }
+
+.resume-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resume-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+// A button, not a clickable div: the whole row navigates, so it needs to be reachable
+// and activatable from the keyboard with the right role announced.
+.resume-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.resume-title {
+  font-size: var(--text-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.resume-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.resume-source {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.resume-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.gallery-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: var(--z-modal, 500);
+}
+
+.gallery-panel {
+  width: 100%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-64, 0 16px 48px rgb(0 0 0 / 0.25));
+}
+
+.gallery-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.gallery-title {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gallery-subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .resume-row { align-items: stretch; }
+  .resume-actions { justify-content: flex-start; }
+}

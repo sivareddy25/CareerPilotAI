@@ -1,0 +1,229 @@
+// Rendering engine styles.
+//
+// The base rules below draw a resume. Everything template-specific lives in the
+// [data-template] blocks at the bottom and adjusts presentation only — never which
+// content is shown, which is decided by the descriptor's section order.
+//
+// Deliberately NOT themed with the app's design tokens: a resume is a printed document
+// and must look identical whether the surrounding UI is in light or dark mode. Its
+// colours are fixed, and its measurements are in points and millimetres so the on-screen
+// page matches the exported PDF.
+
+:host {
+  // Defaults, overridden per template by the host bindings.
+  --resume-accent: #000000;
+  --resume-heading-font: 'Arial', sans-serif;
+  --resume-body-font: 'Arial', sans-serif;
+  --resume-base-size: 10.5pt;
+
+  display: block;
+  color: #111111;
+  background: #ffffff;
+  font-family: var(--resume-body-font);
+  font-size: var(--resume-base-size);
+  line-height: 1.45;
+}
+
+.resume-page {
+  // A4 with the same 18mm margins the PDF exporter uses, so the preview is a true
+  // representation of the export rather than an approximation.
+  width: 210mm;
+  min-height: 297mm;
+  padding: 18mm;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.resume-header {
+  margin-bottom: 6mm;
+}
+
+.resume-name {
+  margin: 0;
+  font-family: var(--resume-heading-font);
+  font-size: calc(var(--resume-base-size) + 11pt);
+  font-weight: 700;
+  color: var(--resume-accent);
+  line-height: 1.15;
+}
+
+.resume-headline {
+  margin: 1mm 0 0;
+  font-size: calc(var(--resume-base-size) + 1.5pt);
+  color: #555555;
+}
+
+.resume-contact {
+  margin: 2mm 0 0;
+  font-size: calc(var(--resume-base-size) - 1pt);
+  color: #555555;
+
+  .separator { margin: 0 2mm; }
+  span { overflow-wrap: anywhere; }
+}
+
+.resume-section {
+  // Avoids a section being split immediately after its heading when printed.
+  break-inside: auto;
+  margin-bottom: 4mm;
+}
+
+.section-heading {
+  margin: 5mm 0 2mm;
+  font-family: var(--resume-heading-font);
+  font-size: calc(var(--resume-base-size) + 1.5pt);
+  font-weight: 700;
+  color: var(--resume-accent);
+  border-bottom: 0.75pt solid var(--resume-accent);
+  padding-bottom: 1mm;
+  // Keeps a heading with the content beneath it across a page break.
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.section-paragraph {
+  margin: 0 0 2mm;
+  overflow-wrap: anywhere;
+}
+
+.entry {
+  margin-bottom: 3mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.entry-title {
+  margin: 0;
+  font-size: calc(var(--resume-base-size) + 0.5pt);
+  font-weight: 700;
+}
+
+.entry-meta {
+  margin: 0.5mm 0 1mm;
+  font-size: calc(var(--resume-base-size) - 1pt);
+  color: #666666;
+
+  a { color: inherit; }
+}
+
+.entry-bullets {
+  margin: 0;
+  padding-left: 5mm;
+
+  li {
+    margin-bottom: 0.8mm;
+    overflow-wrap: anywhere;
+  }
+}
+
+.skill-group strong { font-weight: 700; }
+
+.unparsed {
+  margin-top: 6mm;
+  padding: 3mm;
+  border: 0.75pt dashed #b91c1c;
+  color: #7f1d1d;
+
+  .section-heading {
+    color: #b91c1c;
+    border-bottom-color: #b91c1c;
+    margin-top: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Template variants. Presentation only.
+// ---------------------------------------------------------------------------
+
+// Uppercase headings and no colour: maximum compatibility with automated parsers,
+// which is the entire purpose of this template.
+:host([data-template='AtsFriendly']) {
+  .section-heading {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: calc(var(--resume-base-size) + 0.5pt);
+  }
+}
+
+:host([data-template='Professional']) {
+  .section-heading { border-bottom-width: 1pt; }
+}
+
+// Centred header and generous spacing. Executive resumes are short, so they can spend
+// the vertical space.
+:host([data-template='Executive']) {
+  .resume-page { padding: 24mm; }
+  .resume-header { text-align: center; margin-bottom: 9mm; }
+  .section-heading { letter-spacing: 0.04em; }
+  .entry { margin-bottom: 4.5mm; }
+}
+
+// No rules, no colour, tightest spacing — most content in the least space.
+:host([data-template='Minimal']) {
+  .section-heading {
+    border-bottom: none;
+    font-size: calc(var(--resume-base-size) + 0.5pt);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1mm;
+  }
+  .entry { margin-bottom: 2mm; }
+  .resume-name { color: #111111; }
+}
+
+// The only structural variant: a two-column body.
+//
+// Sidebar sections are chosen by position in the descriptor's section order, not by
+// name, so reordering the catalogue reflows the layout without touching this file.
+// Marked not ATS-safe in the catalogue precisely because parsers interleave columns.
+:host([data-template='Modern']) {
+  .resume-header {
+    border-left: 3pt solid var(--resume-accent);
+    padding-left: 4mm;
+  }
+
+  .section-heading {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: none;
+    border-left: 2pt solid var(--resume-accent);
+    padding-left: 2.5mm;
+  }
+
+  .resume-body {
+    display: grid;
+    grid-template-columns: 1fr 1.9fr;
+    gap: 0 8mm;
+    align-items: start;
+  }
+
+  // First two sections sit in the narrow column; the rest fill the wide one.
+  .resume-section:nth-child(-n + 2) { grid-column: 1; }
+  .resume-section:nth-child(n + 3) { grid-column: 2; }
+}
+
+// ---------------------------------------------------------------------------
+// Print
+// ---------------------------------------------------------------------------
+
+@media print {
+  :host {
+    // Colour must survive; browsers strip backgrounds and colours from print by
+    // default, which would flatten every template into the same grey page.
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .resume-page {
+    width: auto;
+    min-height: 0;
+    // The @page rule in the preview component owns print margins; keeping them here
+    // too would double them.
+    padding: 0;
+    box-shadow: none;
+  }
+
+  // Never printed: this is an import diagnostic for the user, not resume content, and
+  // it must not reach an employer.
+  .unparsed { display: none; }
+}

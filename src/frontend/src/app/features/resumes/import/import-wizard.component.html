@@ -1,0 +1,151 @@
+<app-page-header
+  title="Import resumes"
+  subtitle="Bring in existing resumes from PDF, Word or a CareerPilot JSON export."
+/>
+
+@if (errorMessage(); as message) {
+  <p class="wizard-alert" role="alert" aria-live="assertive">{{ message }}</p>
+}
+
+@if (step() === 'select') {
+  <app-card>
+    <!--
+      A real file input, visually hidden but focusable and label-associated, sits behind
+      the drop zone. Keyboard and screen-reader users get the native control; the drop
+      zone is a pointer affordance layered on top, not a replacement.
+    -->
+    <label class="visually-hidden" for="resume-files">Choose resume files</label>
+    <input
+      #fileInput
+      id="resume-files"
+      class="visually-hidden"
+      type="file"
+      multiple
+      [accept]="accept"
+      (change)="onFilesChosen($event)"
+    />
+
+    <div
+      class="drop-zone"
+      [class.dragging]="dragging()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+    >
+      <app-icon name="upload" size="lg" />
+      <p class="drop-title">Drag files here</p>
+      <p class="drop-hint">
+        PDF, DOCX or JSON · up to 5 MB each · {{ maxFiles }} files at a time
+      </p>
+      <app-button variant="secondary" (btnClick)="fileInput.click()">Choose files</app-button>
+    </div>
+
+    @if (rejected().length > 0) {
+      <ul class="rejected-list" aria-label="Files that were not accepted">
+        @for (item of rejected(); track item.name) {
+          <li>
+            <app-icon name="alert-triangle" size="xs" />
+            <span><strong>{{ item.name }}</strong> — {{ item.reason }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (selected().length > 0) {
+      <ul class="file-list" aria-label="Files ready to import">
+        @for (file of selected(); track file.name + file.size) {
+          <li class="file-row">
+            <app-icon name="file-text" size="sm" />
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size">{{ formatSize(file.size) }}</span>
+            <button
+              type="button"
+              class="remove-button"
+              [attr.aria-label]="'Remove ' + file.name"
+              (click)="remove(file)"
+            >
+              <app-icon name="x" size="xs" />
+            </button>
+          </li>
+        }
+      </ul>
+
+      <div class="wizard-actions">
+        <app-button variant="primary" [loading]="uploading()" (btnClick)="upload()">
+          {{ uploading() ? 'Importing…' : 'Import ' + selected().length + ' file(s)' }}
+        </app-button>
+        <app-button variant="ghost" (btnClick)="startOver()">Clear</app-button>
+      </div>
+    }
+  </app-card>
+
+  <app-card title="What gets imported" variant="outlined">
+    <ul class="explainer-list">
+      <li>
+        <strong>JSON</strong> is lossless — a CareerPilot export re-imports exactly as it left.
+      </li>
+      <li>
+        <strong>DOCX</strong> keeps paragraph and list structure, so sections are usually accurate.
+      </li>
+      <li>
+        <strong>PDF</strong> is approximate. Structure has to be inferred from the text, so
+        check the result before using it.
+      </li>
+      <li>
+        Scanned or image-only PDFs contain no readable text and cannot be imported.
+      </li>
+    </ul>
+  </app-card>
+}
+
+@if (step() === 'review' && result(); as summary) {
+  <app-card [title]="'Imported ' + summary.importedCount + ' of ' + summary.totalFiles">
+    @if (successes().length > 0) {
+      <ul class="result-list">
+        @for (entry of successes(); track entry.fileName) {
+          <li class="result-row success">
+            <app-icon name="check-circle" size="sm" />
+            <div class="result-text">
+              <span class="result-title">{{ entry.title }}</span>
+              <span class="result-file">{{ entry.fileName }}</span>
+
+              @if (entry.warnings.length > 0) {
+                <!--
+                  Warnings are shown, not swallowed. Heuristic parsing is lossy, and the
+                  user is the only one who can tell what is missing.
+                -->
+                <ul class="warning-list">
+                  @for (warning of entry.warnings; track warning) {
+                    <li>{{ warning }}</li>
+                  }
+                </ul>
+              }
+            </div>
+            <app-button variant="ghost" size="sm" (btnClick)="openResume(entry.resumeId)">
+              Open
+            </app-button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (failures().length > 0) {
+      <ul class="result-list">
+        @for (entry of failures(); track entry.fileName) {
+          <li class="result-row failure">
+            <app-icon name="x-circle" size="sm" />
+            <div class="result-text">
+              <span class="result-title">{{ entry.fileName }}</span>
+              <span class="result-file">{{ entry.error }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="wizard-actions">
+      <app-button variant="primary" (btnClick)="goToList()">Go to my resumes</app-button>
+      <app-button variant="ghost" (btnClick)="startOver()">Import more</app-button>
+    </div>
+  </app-card>
+}

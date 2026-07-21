@@ -91,6 +91,7 @@ Icon?
 
 # ===================== Misc ===================================
 *.log
+.careerpilot-*.log
 *.bak
 *.swp
 Thumbs.db
