@@ -71,6 +71,11 @@ public sealed class UserProfile : SoftDeleteEntity
 
     public string? PortfolioUrl { get; private set; }
 
+    public bool IsOnboardingCompleted { get; private set; }
+    public string? WorkAuthorization { get; private set; }
+    public string? PreferredSalary { get; private set; }
+    public string? TargetJobTitles { get; private set; }
+
     public UserPreferences Preferences { get; private set; }
 
     public User? User { get; private set; }
@@ -111,6 +116,27 @@ public sealed class UserProfile : SoftDeleteEntity
         LinkedInUrl = Normalize(linkedInUrl);
         GitHubUrl = Normalize(gitHubUrl);
         PortfolioUrl = Normalize(portfolioUrl);
+    }
+
+    public void CompleteOnboarding(
+        string? displayName,
+        string? phoneNumber,
+        string? linkedInUrl,
+        string? gitHubUrl,
+        string? portfolioUrl,
+        string? workAuthorization,
+        string? preferredSalary,
+        string? targetJobTitles)
+    {
+        DisplayName = Normalize(displayName);
+        PhoneNumber = Normalize(phoneNumber);
+        LinkedInUrl = Normalize(linkedInUrl);
+        GitHubUrl = Normalize(gitHubUrl);
+        PortfolioUrl = Normalize(portfolioUrl);
+        WorkAuthorization = Normalize(workAuthorization);
+        PreferredSalary = Normalize(preferredSalary);
+        TargetJobTitles = Normalize(targetJobTitles);
+        IsOnboardingCompleted = true;
     }
 
     public void SetProfilePicture(string url)
