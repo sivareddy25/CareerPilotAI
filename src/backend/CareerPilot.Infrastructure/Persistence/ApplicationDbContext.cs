@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using CareerPilot.Domain.Abstractions;
 using CareerPilot.Domain.Entities;
 using CareerPilot.Domain.Entities.Identity;
+using CareerPilot.Domain.Entities.Profiles;
 using CareerPilot.Infrastructure.Persistence.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -31,6 +32,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         base.ConfigureConventions(configurationBuilder);
@@ -54,8 +57,13 @@ public class ApplicationDbContext : DbContext
         // Apply global filters and concurrency tokens across entity hierarchy
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            // Global soft delete filter
-            if (typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType))
+            // Global soft delete filter, applied only where a configuration has not
+            // already defined one. EF permits a single filter per entity, so applying
+            // this unconditionally would silently replace the richer filters written in
+            // IEntityTypeConfiguration classes — for example the one on UserProfile
+            // that also excludes profiles whose owning user is deleted.
+            if (typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType)
+                && entityType.GetQueryFilter() is null)
             {
                 modelBuilder.Entity(entityType.ClrType)
                     .HasQueryFilter(GetSoftDeleteFilter(entityType.ClrType));

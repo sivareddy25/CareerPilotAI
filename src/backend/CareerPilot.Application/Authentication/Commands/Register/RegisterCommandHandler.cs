@@ -5,12 +5,19 @@ using CareerPilot.Application.Authentication.Models;
 using CareerPilot.Application.Exceptions;
 using CareerPilot.Domain.Entities.Identity;
 using Microsoft.Extensions.Logging;
+
+// Aliased because the authentication DTO in this file's own namespace is also called
+// UserProfile. The two are genuinely different things — one is the projection returned
+// by /auth/me, the other the profile aggregate — and the alias keeps that distinction
+// visible at the point of use.
+using ProfileAggregate = CareerPilot.Domain.Entities.Profiles.UserProfile;
 using Microsoft.Extensions.Options;
 
 namespace CareerPilot.Application.Authentication.Commands.Register;
 
 internal sealed class RegisterCommandHandler(
     IUserRepository users,
+    IUserProfileRepository profiles,
     IRoleRepository roles,
     IPasswordHashService passwordHashService,
     AuthenticationSessionFactory sessionFactory,
@@ -65,6 +72,11 @@ internal sealed class RegisterCommandHandler(
         }
 
         users.Add(user);
+
+        // Every account gets a profile at creation, so profile reads never have to
+        // handle a missing row and no lazy "create on first access" path exists to get
+        // the concurrency wrong.
+        profiles.Add(ProfileAggregate.CreateFor(user.Id));
 
         // Saved before the session is built, and not merely for ordering: the session
         // factory resolves roles and permissions by querying them back, so the role

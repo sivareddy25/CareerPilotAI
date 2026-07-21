@@ -40,4 +40,20 @@ export class ApiService {
   delete<T>(endpoint: string, options?: HttpOptions): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${endpoint}`, options);
   }
+
+  /**
+   * Escape hatch for verbs the shorthands cannot express.
+   *
+   * Needed for DELETE with a request body — account deletion carries a password, which
+   * must not go in a query string where it would be captured by server logs, browser
+   * history and referrer headers. `HttpClient.delete` accepts a body only through the
+   * generic request form.
+   */
+  request<T>(
+    method: string,
+    endpoint: string,
+    options?: HttpOptions & { body?: unknown },
+  ): Observable<T> {
+    return this.http.request<T>(method, `${this.baseUrl}${endpoint}`, options);
+  }
 }

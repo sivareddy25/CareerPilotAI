@@ -26,6 +26,8 @@ internal sealed class AuthenticationExceptionHandler(
         {
             AuthenticationException => (StatusCodes.Status401Unauthorized, "Authentication failed."),
             ConflictException => (StatusCodes.Status409Conflict, "The request conflicts with existing data."),
+            NotFoundException => (StatusCodes.Status404NotFound, "The requested resource was not found."),
+            InvalidUploadException => (StatusCodes.Status400BadRequest, "The uploaded file was rejected."),
             // Placeholder commands that fail closed rather than pretending to work.
             NotSupportedException => (StatusCodes.Status501NotImplemented, "This operation is not available."),
             _ => (0, string.Empty),

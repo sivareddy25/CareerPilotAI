@@ -5,6 +5,8 @@ using CareerPilot.Infrastructure.Persistence;
 using CareerPilot.Infrastructure.Persistence.Interceptors;
 using CareerPilot.Infrastructure.Persistence.Repositories;
 using CareerPilot.Infrastructure.Persistence.Seeding;
+using CareerPilot.Infrastructure.Storage;
+using CareerPilot.Application.Abstractions.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +32,7 @@ public static class DependencyInjection
         services.AddOptions(configuration);
         services.AddPersistenceInfrastructure(configuration);
         services.AddAuthenticationInfrastructure(configuration, environment);
+        services.AddStorageInfrastructure();
 
         return services;
     }
@@ -41,6 +44,17 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.SectionName));
         services.Configure<PlaywrightOptions>(configuration.GetSection(PlaywrightOptions.SectionName));
+        services.Configure<FileStorageOptions>(configuration.GetSection(FileStorageOptions.SectionName));
+    }
+
+    /// <summary>
+    /// Binary storage. Singleton because the local provider is stateless once its root
+    /// path is resolved; a cloud provider swapped in here would share a client the same
+    /// way.
+    /// </summary>
+    private static void AddStorageInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<IFileStorageService, LocalFileStorageService>();
     }
 
     private static void AddPersistenceInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -83,6 +97,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
         services.AddScoped<IdentitySeeder>();
     }

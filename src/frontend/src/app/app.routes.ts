@@ -8,8 +8,6 @@ export const routes: Routes = [
   {
     path: 'auth',
     component: AuthLayoutComponent,
-    // guestGuard sits on the parent so it covers every child at once. A signed-in user
-    // reaching any of these is redirected home rather than offered a second session.
     canActivate: [guestGuard],
     children: [
       {
@@ -38,6 +36,56 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./features/home/home.component'),
         title: 'CareerPilot AI - Home',
+      },
+      {
+        path: 'design-system',
+        loadComponent: () => import('./features/design-system/design-system.component'),
+        title: 'CareerPilot AI - Design System Infrastructure',
+      },
+      {
+        // The shell is loaded once and hosts every section, so switching tabs swaps
+        // only the child chunk rather than re-rendering the header and tab strip.
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile-shell.component'),
+        children: [
+          {
+            path: 'overview',
+            loadComponent: () => import('./features/profile/overview/profile-overview.component'),
+            title: 'CareerPilot AI - Profile',
+          },
+          {
+            path: 'edit',
+            loadComponent: () => import('./features/profile/edit/profile-edit.component'),
+            title: 'CareerPilot AI - Edit Profile',
+          },
+          {
+            path: 'account',
+            loadComponent: () => import('./features/profile/account/account-settings.component'),
+            title: 'CareerPilot AI - Account Settings',
+          },
+          {
+            path: 'security',
+            loadComponent: () => import('./features/profile/security/security-settings.component'),
+            title: 'CareerPilot AI - Security Settings',
+          },
+          {
+            path: 'notifications',
+            loadComponent: () =>
+              import('./features/profile/notifications/notification-settings.component'),
+            title: 'CareerPilot AI - Notification Settings',
+          },
+          {
+            path: 'appearance',
+            loadComponent: () =>
+              import('./features/profile/appearance/appearance-settings.component'),
+            title: 'CareerPilot AI - Appearance Settings',
+          },
+          {
+            path: '',
+            redirectTo: 'overview',
+            pathMatch: 'full',
+          },
+        ],
       },
     ],
   },

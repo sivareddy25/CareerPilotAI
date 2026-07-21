@@ -165,6 +165,50 @@ public sealed class User : SoftDeleteEntity
         return assignment;
     }
 
+    /// <summary>
+    /// Updates the user's real name.
+    /// </summary>
+    /// <remarks>
+    /// Lives on <see cref="User"/> rather than on the profile because the name is
+    /// carried in issued tokens and returned by <c>/auth/me</c>. The profile module
+    /// edits it through here so there is only ever one copy — see
+    /// <c>UserProfile</c> for why the field is not duplicated.
+    ///
+    /// Note that a name change does <b>not</b> rotate the security stamp: it is not a
+    /// credential, and signing the user out of every device to correct a typo would be
+    /// disproportionate. Existing tokens carry the old name until they expire.
+    /// </remarks>
+    public void UpdateName(string? firstName, string? lastName)
+    {
+        FirstName = string.IsNullOrWhiteSpace(firstName) ? null : firstName.Trim();
+        LastName = string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim();
+    }
+
+    /// <summary>
+    /// Marks the account deleted and severs every active session.
+    /// </summary>
+    /// <remarks>
+    /// Soft delete: the row survives so that audit history and foreign keys stay
+    /// intact, while the global query filter hides it from every read. The security
+    /// stamp is rotated and <see cref="IsActive"/> cleared so a token issued moments
+    /// before deletion cannot outlive it.
+    ///
+    /// The email is <i>not</i> scrubbed here. The unique index is filtered on
+    /// <c>is_deleted</c>, so the address is already free for re-registration, and
+    /// retaining it is what lets a deletion be traced during the retention window.
+    /// Erasure of the address itself belongs to a data-retention job with its own
+    /// policy, not to this method.
+    /// </remarks>
+    public void MarkDeleted(DateTime utcNow, string? deletedBy = null)
+    {
+        IsDeleted = true;
+        DeletedAt = utcNow;
+        DeletedBy = deletedBy;
+        IsActive = false;
+
+        RegenerateSecurityStamp();
+    }
+
     public void ConfirmEmail() => EmailConfirmed = true;
 
     public void Activate() => IsActive = true;

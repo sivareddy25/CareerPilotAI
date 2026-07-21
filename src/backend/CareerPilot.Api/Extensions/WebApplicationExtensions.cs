@@ -39,12 +39,27 @@ public static class WebApplicationExtensions
 
         app.UseCors(CorsOptions.PolicyName);
 
-        // 5. Rate limiting before authentication, so that a flood of sign-in attempts
+        // 5. Uploaded files, served *before* the authorization middleware.
+        //
+        //    The position is forced by two things. First, an <img> element cannot send
+        //    an Authorization header, so an avatar behind bearer authentication simply
+        //    would not render. Second, this application sets a fallback authorization
+        //    policy, and that policy is applied to requests which match no endpoint —
+        //    static files included — so anything served after UseAuthorization() comes
+        //    back 401.
+        //
+        //    These files are therefore public, and their protection is that the names
+        //    are random GUIDs: a URL is unguessable, and it is only ever disclosed to
+        //    the profile's owner. If avatars later need true access control, the answer
+        //    is short-lived signed URLs from the storage provider, not moving this line.
+        app.UseUploadedFiles();
+
+        // 6. Rate limiting before authentication, so that a flood of sign-in attempts
         //    is rejected without ever paying for a BCrypt verification. Placing it
         //    after would let an attacker force the expensive work anyway.
         app.UseRateLimiter();
 
-        // 6. Authentication establishes *who* the caller is; authorization then decides
+        // 7. Authentication establishes *who* the caller is; authorization then decides
         //    what they may do. The order is mandatory — authorization inspects the
         //    principal that authentication produces, and reversing them means every
         //    request is evaluated as anonymous.
