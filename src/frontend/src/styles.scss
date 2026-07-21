@@ -1,8 +1,33 @@
-@use 'styles/variables' as *;
 @use 'styles/colors' as *;
-@use 'styles/themes' as *;
 @use 'styles/typography' as *;
 @use 'styles/spacing' as *;
+@use 'styles/radius' as *;
+@use 'styles/elevation' as *;
+@use 'styles/animation' as *;
+@use 'styles/themes' as *;
 @use 'styles/mixins' as *;
 @use 'styles/reset' as *;
 @use 'styles/accessibility' as *;
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--duration-normal) var(--ease-fluent), color var(--duration-normal) var(--ease-fluent);
+}
+
+.app-tooltip-bubble {
+  position: fixed;
+  padding: 4px 8px;
+  font-size: var(--text-caption);
+  font-family: var(--font-sans);
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  animation: fadeIn var(--duration-fast) var(--ease-fluent);
+}
+

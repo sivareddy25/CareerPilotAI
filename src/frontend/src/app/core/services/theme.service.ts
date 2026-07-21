@@ -25,7 +25,7 @@ export class ThemeService {
 
   private initTheme(): void {
     const saved = StorageUtils.getItem<ThemeMode>(STORAGE_KEYS.THEME_PREFERENCE);
-    if (saved && ['light', 'dark', 'system'].includes(saved)) {
+    if (saved && ['light', 'dark', 'system', 'high-contrast'].includes(saved)) {
       this.mode.set(saved);
     } else {
       this.mode.set('system');
@@ -43,7 +43,7 @@ export class ThemeService {
   private applyTheme(mode: ThemeMode): void {
     if (typeof document === 'undefined') return;
 
-    let targetTheme: 'light' | 'dark' = 'light';
+    let targetTheme: 'light' | 'dark' | 'high-contrast' = 'light';
     if (mode === 'system') {
       targetTheme =
         typeof window !== 'undefined' &&

@@ -1,11 +1,17 @@
-// Spacing Scale Tokens
-$spacing-1: 0.25rem;  // 4px
-$spacing-2: 0.5rem;   // 8px
-$spacing-3: 0.75rem;  // 12px
-$spacing-4: 1rem;     // 16px
-$spacing-5: 1.25rem;  // 20px
-$spacing-6: 1.5rem;   // 24px
-$spacing-8: 2rem;     // 32px
-$spacing-10: 2.5rem;  // 40px
-$spacing-12: 3rem;    // 48px
-$spacing-16: 4rem;    // 64px
+// 4px / 8px Base Spacing Grid
+
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}

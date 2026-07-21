@@ -1,10 +1,13 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { ElementVariant, ElementSize } from '../../types/component.types';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
   selector: 'app-button',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   template: `
     <button
       [type]="type()"
@@ -14,7 +17,7 @@ import { ElementVariant, ElementSize } from '../../types/component.types';
       [attr.aria-busy]="loading()"
     >
       @if (loading()) {
-        <span class="spinner" aria-hidden="true"></span>
+        <span class="btn-spinner" aria-hidden="true"></span>
       }
       <ng-content />
     </button>
@@ -23,17 +26,24 @@ import { ElementVariant, ElementSize } from '../../types/component.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ButtonComponent {
-  readonly variant = input<ElementVariant>('primary');
-  readonly size = input<ElementSize>('md');
+  readonly variant = input<ButtonVariant>('primary');
+  readonly size = input<ButtonSize>('md');
   readonly type = input<'button' | 'submit' | 'reset'>('button');
   readonly disabled = input<boolean>(false);
   readonly loading = input<boolean>(false);
+  readonly fullWidth = input<boolean>(false);
 
   readonly btnClick = output<MouseEvent>();
 
-  protected buttonClasses(): string {
-    return `btn btn-${this.variant()} btn-${this.size()} ${this.loading() ? 'btn-loading' : ''}`;
-  }
+  protected readonly buttonClasses = computed(() => {
+    return [
+      'btn',
+      `btn-${this.variant()}`,
+      `btn-${this.size()}`,
+      this.fullWidth() ? 'btn-full' : '',
+      this.loading() ? 'btn-loading' : ''
+    ].filter(Boolean).join(' ');
+  });
 
   protected onClick(event: MouseEvent): void {
     if (!this.disabled() && !this.loading()) {
