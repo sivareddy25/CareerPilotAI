@@ -1,0 +1,175 @@
+@if (errorMessage(); as message) {
+  <p class="form-alert" role="alert" aria-live="assertive">{{ message }}</p>
+}
+
+<app-card title="Profile picture" subtitle="JPEG, PNG, WebP or GIF, up to 2 MB.">
+  <div class="picture-row">
+    <app-avatar
+      [src]="profile()?.profilePictureUrl ?? undefined"
+      [name]="displayName()"
+      size="xl"
+    />
+
+    <div class="picture-actions">
+      <!--
+        A real file input, visually hidden but focusable and label-associated, rather
+        than a div wired to a click handler. Keyboard users and screen readers get the
+        native control; the styling is carried by the button beside it.
+      -->
+      <label class="visually-hidden" for="profile-picture">Choose a profile picture</label>
+      <input
+        #pictureInput
+        id="profile-picture"
+        class="visually-hidden"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        (change)="onFileSelected($event)"
+      />
+
+      <app-button variant="secondary" [loading]="uploading()" (btnClick)="pictureInput.click()">
+        Upload new picture
+      </app-button>
+
+      @if (profile()?.profilePictureUrl) {
+        <app-button variant="ghost" [loading]="uploading()" (btnClick)="removePicture()">
+          Remove
+        </app-button>
+      }
+    </div>
+  </div>
+</app-card>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <app-card title="Personal details">
+    <div class="form-grid">
+      <app-input
+        label="First name"
+        [value]="value('firstName')"
+        [error]="errorFor('firstName')"
+        (valueChange)="set('firstName', $event)"
+      />
+      <app-input
+        label="Last name"
+        [value]="value('lastName')"
+        [error]="errorFor('lastName')"
+        (valueChange)="set('lastName', $event)"
+      />
+      <app-input
+        label="Display name"
+        helperText="Shown instead of your full name where available."
+        [value]="value('displayName')"
+        [error]="errorFor('displayName')"
+        (valueChange)="set('displayName', $event)"
+      />
+      <app-input
+        label="Phone number"
+        type="tel"
+        [value]="value('phoneNumber')"
+        [error]="errorFor('phoneNumber')"
+        (valueChange)="set('phoneNumber', $event)"
+      />
+    </div>
+
+    <div class="form-grid single" style="margin-top: var(--space-4)">
+      <!--
+        Email is rendered read-only rather than omitted: the user needs to see which
+        address the account uses. The server rejects any attempt to change it here —
+        it is the login identifier, so changing it needs a verification round-trip
+        against both the old and the new address.
+      -->
+      <app-input
+        label="Email"
+        type="email"
+        [value]="profile()?.email ?? ''"
+        [readonly]="true"
+        [disabled]="true"
+      />
+      <p class="readonly-note">
+        Your email address is used to sign in and cannot be changed here.
+      </p>
+    </div>
+  </app-card>
+
+  <app-card title="Location & locale" style="margin-top: var(--space-4)">
+    <div class="form-grid">
+      <app-select
+        label="Country"
+        placeholder="Select a country..."
+        [options]="countries"
+        [value]="value('country')"
+        [error]="errorFor('country')"
+        (valueChange)="set('country', $event)"
+      />
+      <app-input
+        label="State / Region"
+        [value]="value('state')"
+        [error]="errorFor('state')"
+        (valueChange)="set('state', $event)"
+      />
+      <app-input
+        label="City"
+        [value]="value('city')"
+        [error]="errorFor('city')"
+        (valueChange)="set('city', $event)"
+      />
+      <app-select
+        label="Time zone"
+        placeholder="Select a time zone..."
+        [options]="timeZones"
+        [value]="value('timeZone')"
+        [error]="errorFor('timeZone')"
+        (valueChange)="set('timeZone', $event)"
+      />
+      <app-select
+        label="Preferred language"
+        placeholder="Select a language..."
+        [options]="languages"
+        [value]="value('preferredLanguage')"
+        [error]="errorFor('preferredLanguage')"
+        (valueChange)="set('preferredLanguage', $event)"
+      />
+    </div>
+  </app-card>
+
+  <app-card title="About you" style="margin-top: var(--space-4)">
+    <app-textarea
+      label="Bio"
+      [rows]="5"
+      [maxLength]="bioMax"
+      [helperText]="bioLength() + ' / ' + bioMax + ' characters'"
+      [value]="value('bio')"
+      [error]="errorFor('bio')"
+      (valueChange)="set('bio', $event)"
+    />
+
+    <div class="form-grid" style="margin-top: var(--space-4)">
+      <app-input
+        label="LinkedIn URL"
+        placeholder="https://linkedin.com/in/..."
+        [value]="value('linkedInUrl')"
+        [error]="errorFor('linkedInUrl')"
+        (valueChange)="set('linkedInUrl', $event)"
+      />
+      <app-input
+        label="GitHub URL"
+        placeholder="https://github.com/..."
+        [value]="value('gitHubUrl')"
+        [error]="errorFor('gitHubUrl')"
+        (valueChange)="set('gitHubUrl', $event)"
+      />
+      <app-input
+        label="Portfolio URL"
+        placeholder="https://..."
+        [value]="value('portfolioUrl')"
+        [error]="errorFor('portfolioUrl')"
+        (valueChange)="set('portfolioUrl', $event)"
+      />
+    </div>
+  </app-card>
+
+  <div class="form-actions">
+    <app-button type="submit" variant="primary" [loading]="saving()">
+      {{ saving() ? 'Saving…' : 'Save changes' }}
+    </app-button>
+  </div>
+</form>

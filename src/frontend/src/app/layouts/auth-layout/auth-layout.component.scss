@@ -1,0 +1,30 @@
+.auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 26rem;
+}
+
+.auth-brand {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.auth-brand-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.auth-brand-tagline {
+  margin: 0.375rem 0 0;
+  font-size: 0.9375rem;
+  opacity: 0.7;
+}

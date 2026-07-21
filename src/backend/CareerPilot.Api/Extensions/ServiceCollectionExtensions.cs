@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using Asp.Versioning;
+using CareerPilot.Api.Authorization;
 using CareerPilot.Api.Configuration;
 using CareerPilot.Api.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 
 namespace CareerPilot.Api.Extensions;
@@ -19,14 +21,47 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddControllers();
-        services.AddHealthChecks();
+
+        var connectionString = configuration["Database:ConnectionString"]
+            ?? configuration.GetConnectionString("DefaultConnection")
+            ?? string.Empty;
+
+        var healthChecks = services.AddHealthChecks();
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            healthChecks.AddNpgSql(connectionString, name: "postgresql", tags: ["db", "data"]);
+        }
 
         services.AddApiVersioningSupport();
         services.AddCorsPolicy(configuration);
         services.AddProblemDetailsSupport();
         services.AddOpenApiDocuments();
+        services.AddAuthorizationInfrastructure();
+        services.AddAuthenticationRateLimiting(configuration);
+
+        services.Configure<RefreshTokenCookieOptions>(
+            configuration.GetSection(RefreshTokenCookieOptions.SectionName));
 
         return services;
+    }
+
+    /// <summary>
+    /// Authorization only. Authentication — the JWT bearer handler — is registered by
+    /// the Infrastructure layer, which owns token issuance and validation together.
+    /// </summary>
+    private static void AddAuthorizationInfrastructure(this IServiceCollection services)
+    {
+        // Replaces the default provider so that Permission:{name} policies resolve
+        // without being registered one by one. Singleton, matching the framework's own
+        // lifetime for this service.
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+        // Scoped, not singleton: it depends on ICurrentUserService and IPermissionService,
+        // both of which are per-request. A singleton here would capture the first
+        // request's DbContext and hold it for the process lifetime.
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        services.AddAuthorization(options => options.AddCareerPilotPolicies());
     }
 
     private static void AddApiVersioningSupport(this IServiceCollection services)
@@ -35,16 +70,8 @@ public static class ServiceCollectionExtensions
             .AddApiVersioning(options =>
             {
                 options.DefaultApiVersion = new ApiVersion(1, 0);
-
-                // Unversioned requests resolve to v1 rather than 400ing, so existing
-                // clients keep working when v2 appears.
                 options.AssumeDefaultVersionWhenUnspecified = true;
-
-                // Advertises supported/deprecated versions in response headers.
                 options.ReportApiVersions = true;
-
-                // URL segment is canonical; the header is a fallback for clients
-                // that cannot vary their path.
                 options.ApiVersionReader = ApiVersionReader.Combine(
                     new UrlSegmentApiVersionReader(),
                     new HeaderApiVersionReader("x-api-version"));
@@ -52,8 +79,6 @@ public static class ServiceCollectionExtensions
             .AddMvc()
             .AddApiExplorer(options =>
             {
-                // Produces group names of the form "v1", which the OpenAPI document
-                // name matches — that is what keeps each version's endpoints grouped.
                 options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
             });
@@ -68,8 +93,6 @@ public static class ServiceCollectionExtensions
         services.AddCors(options =>
             options.AddPolicy(CorsOptions.PolicyName, policy =>
             {
-                // No configured origins means no cross-origin access. Failing closed
-                // matters more than developer convenience here.
                 if (corsOptions.AllowedOrigins.Length == 0)
                 {
                     return;
@@ -93,21 +116,19 @@ public static class ServiceCollectionExtensions
             {
                 context.ProblemDetails.Instance =
                     $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
-
-                // Correlates the client-visible error with the server log entry.
                 context.ProblemDetails.Extensions["traceId"] =
                     Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
             });
 
-        // Order is the contract: most specific first, terminal handler last.
+        // Order is precedence: each handler may decline, passing the exception on. The
+        // catch-all must stay last.
         services.AddExceptionHandler<ValidationExceptionHandler>();
+        services.AddExceptionHandler<AuthenticationExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
     }
 
     private static void AddOpenApiDocuments(this IServiceCollection services)
     {
-        // Document name "v1" matches the ApiExplorer group name, so v1 endpoints
-        // land in the v1 document. Add a document per version as versions are added.
         services.AddOpenApi("v1", options =>
             options.AddDocumentTransformer((document, _, _) =>
             {
@@ -116,6 +137,19 @@ public static class ServiceCollectionExtensions
                     Title = "CareerPilot AI API",
                     Version = "v1",
                     Description = "AI-powered job application automation platform.",
+                };
+
+                // Declares the bearer scheme so the generated document — and the Swagger
+                // UI's Authorize button — reflect how the API is actually secured.
+                // Documentation only: it grants nothing and is never the enforcement point.
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Paste the access token only — Swagger adds the \"Bearer \" prefix.",
                 };
 
                 return Task.CompletedTask;

@@ -1,5 +1,6 @@
-// Raw Color Palette Tokens
+// Microsoft Fluent 2 & Modern SaaS Design Tokens - Color Palette
 
+// Neutrals (Slate scale)
 $color-slate-50: #f8fafc;
 $color-slate-100: #f1f5f9;
 $color-slate-200: #e2e8f0;
@@ -12,17 +13,42 @@ $color-slate-800: #1e293b;
 $color-slate-900: #0f172a;
 $color-slate-950: #020617;
 
-$color-indigo-50: #eep2ff;
-$color-indigo-100: #e0e7ff;
-$color-indigo-500: #6366f1;
-$color-indigo-600: #4f46e5;
-$color-indigo-700: #4338ca;
+// Brand Primary (Indigo/Blue Fluent tint)
+$color-brand-50: #eep2ff;
+$color-brand-100: #e0e7ff;
+$color-brand-200: #c7d2fe;
+$color-brand-300: #a5b4fc;
+$color-brand-400: #818cf8;
+$color-brand-500: #6366f1;
+$color-brand-600: #4f46e5;
+$color-brand-700: #4338ca;
+$color-brand-800: #3730a3;
+$color-brand-900: #312e81;
 
-$color-emerald-500: #10b981;
-$color-emerald-600: #059669;
+// Success (Emerald)
+$color-success-50: #ecfdf5;
+$color-success-100: #d1fae5;
+$color-success-500: #10b981;
+$color-success-600: #059669;
+$color-success-700: #047857;
 
-$color-amber-500: #f59e0b;
-$color-amber-600: #d97706;
+// Warning (Amber)
+$color-warning-50: #fffbeb;
+$color-warning-100: #fef3c7;
+$color-warning-500: #f59e0b;
+$color-warning-600: #d97706;
+$color-warning-700: #b45309;
 
-$color-rose-500: #f43f5e;
-$color-rose-600: #e11d48;
+// Danger (Rose / Crimson)
+$color-danger-50: #fff1f2;
+$color-danger-100: #ffe4e6;
+$color-danger-500: #f43f5e;
+$color-danger-600: #e11d48;
+$color-danger-700: #be123c;
+
+// Info (Sky Blue)
+$color-info-50: #f0f9ff;
+$color-info-100: #e0f2fe;
+$color-info-500: #0ea5e9;
+$color-info-600: #0284c7;
+$color-info-700: #0369a1;

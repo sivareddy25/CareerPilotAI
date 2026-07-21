@@ -1,3 +1,4 @@
+export * from './authentication';
 export * from './config/app-config.model';
 export * from './config/app-config.service';
 export * from './constants/api.constants';

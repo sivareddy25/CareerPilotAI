@@ -1,0 +1,60 @@
+<section class="auth-card">
+  <h2 class="auth-title">Sign in</h2>
+  <p class="auth-subtitle">Welcome back. Enter your details to continue.</p>
+
+  @if (errorMessage(); as message) {
+    <!-- assertive: a failed sign-in must interrupt a screen reader, not queue behind
+         other announcements, or the user retypes into a form that already failed. -->
+    <div class="auth-alert" role="alert" aria-live="assertive">{{ message }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="field">
+      <label class="field-label" for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        class="field-input"
+        formControlName="email"
+        autocomplete="username"
+        inputmode="email"
+        [attr.aria-invalid]="showError('email') || !!fieldErrors()['email']"
+        [attr.aria-describedby]="showError('email') ? 'email-error' : null"
+      />
+      @if (showError('email')) {
+        <p class="field-error" id="email-error">Enter a valid email address.</p>
+      } @else if (fieldErrors()['email']; as serverError) {
+        <p class="field-error">{{ serverError }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        class="field-input"
+        formControlName="password"
+        autocomplete="current-password"
+        [attr.aria-invalid]="showError('password') || !!fieldErrors()['password']"
+        [attr.aria-describedby]="showError('password') ? 'password-error' : null"
+      />
+      @if (showError('password')) {
+        <p class="field-error" id="password-error">Your password is required.</p>
+      } @else if (fieldErrors()['password']; as serverError) {
+        <p class="field-error">{{ serverError }}</p>
+      }
+    </div>
+
+    <div class="auth-actions">
+      <app-button type="submit" variant="primary" size="md" [loading]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </app-button>
+    </div>
+  </form>
+
+  <p class="auth-footer">
+    Don't have an account?
+    <a routerLink="/auth/register">Create one</a>
+  </p>
+</section>
