@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CareerPilot: Start everything",
+      "type": "shell",
+      "command": "${workspaceFolder}/run.sh",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "CareerPilot: Start Docker",
+      "type": "shell",
+      "command": "${workspaceFolder}/run.sh --docker",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

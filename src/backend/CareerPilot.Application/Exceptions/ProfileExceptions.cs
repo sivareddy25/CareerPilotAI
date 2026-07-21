@@ -18,7 +18,11 @@ public sealed class ProfileNotFoundException()
     : NotFoundException("No profile exists for this account.");
 
 /// <summary>
-/// The uploaded file was rejected — wrong type, too large, or not actually an image.
-/// Surfaces as 400.
+/// An uploaded file was rejected — wrong type, too large, or not the content it claims
+/// to be. Surfaces as 400.
 /// </summary>
-public sealed class InvalidUploadException(string message) : Exception(message);
+/// <remarks>
+/// Unsealed so upload rejections specific to a feature can subclass it and inherit the
+/// 400 mapping. See <c>UnsupportedResumeFormatException</c>.
+/// </remarks>
+public class InvalidUploadException(string message) : Exception(message);

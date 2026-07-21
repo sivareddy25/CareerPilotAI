@@ -1,11 +1,9 @@
 using CareerPilot.Api.Extensions;
 using CareerPilot.Application;
 using CareerPilot.Infrastructure;
-
-// CareerPilot AI — API composition root.
-//
-// Each layer owns its own registration. This file states the composition and
-// nothing else: no business logic, no service wiring detail.
+using CareerPilot.Infrastructure.Authentication;
+using CareerPilot.Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +16,19 @@ var app = builder.Build();
 
 app.UseApiPipeline();
 
-await app.SeedIdentityAsync();
+var hostingOptions = app.Services.GetRequiredService<IOptions<HostingOptions>>().Value;
+
+if (hostingOptions.IsLocalMode)
+{
+    await app.ApplyLocalDatabaseMigrationsAsync();
+
+    using var scope = app.Services.CreateScope();
+    var localUserProvider = scope.ServiceProvider.GetRequiredService<LocalUserProvider>();
+    await localUserProvider.EnsureLocalUserCreatedAsync();
+}
+else
+{
+    await app.SeedIdentityAsync();
+}
 
 app.Run();

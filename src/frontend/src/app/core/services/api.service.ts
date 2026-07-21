@@ -52,8 +52,21 @@ export class ApiService {
   request<T>(
     method: string,
     endpoint: string,
-    options?: HttpOptions & { body?: unknown },
+    options?: HttpOptions & {
+      body?: unknown;
+      /** `blob` for file downloads; `json` otherwise. */
+      responseType?: 'json' | 'blob' | 'text' | 'arraybuffer';
+      /** `response` when the caller needs headers, such as Content-Disposition. */
+      observe?: 'body' | 'response' | 'events';
+    },
   ): Observable<T> {
-    return this.http.request<T>(method, `${this.baseUrl}${endpoint}`, options);
+    // HttpClient's overloads narrow the return type from the literal values of
+    // responseType and observe, which cannot be expressed through this wrapper's
+    // generic. The cast is confined to this one line; callers stay fully typed via T.
+    return this.http.request(
+      method,
+      `${this.baseUrl}${endpoint}`,
+      options as object,
+    ) as unknown as Observable<T>;
   }
 }

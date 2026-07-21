@@ -1,0 +1,80 @@
+@if (loading()) {
+  <div class="preview-loading"><app-spinner /></div>
+} @else if (error(); as message) {
+  <div class="preview-error" role="alert">
+    <p>{{ message }}</p>
+    <app-button variant="secondary" (btnClick)="backToList()">Back to resumes</app-button>
+  </div>
+} @else if (resume(); as data) {
+  <!-- Toolbar is excluded from print by the stylesheet; only the page itself prints. -->
+  <div class="preview-toolbar no-print">
+    <div class="toolbar-group">
+      <app-icon-button icon="arrow-left" ariaLabel="Back to resumes" (btnClick)="backToList()" />
+      <div class="resume-title">
+        <h1>{{ data.title }}</h1>
+        @if (activeTemplate(); as template) {
+          <app-badge [variant]="template.isAtsSafe ? 'success' : 'warning'">
+            {{ template.isAtsSafe ? 'ATS safe' : 'Not ATS safe' }}
+          </app-badge>
+        }
+      </div>
+    </div>
+
+    <div class="toolbar-group toolbar-controls">
+      <div class="template-picker">
+        <app-select
+          [options]="templateOptions()"
+          label="Template"
+          [value]="data.template"
+          (valueChange)="switchTemplate($event)"
+        />
+      </div>
+
+      <div class="zoom-controls" role="group" aria-label="Zoom">
+        <app-button variant="ghost" size="sm" aria-label="Zoom out" (btnClick)="zoomOut()">&minus;</app-button>
+        <button type="button" class="zoom-value" (click)="resetZoom()" aria-label="Reset zoom to 100%">
+          {{ zoomPercent() }}%
+        </button>
+        <app-button variant="ghost" size="sm" aria-label="Zoom in" (btnClick)="zoomIn()">+</app-button>
+      </div>
+
+      <app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-pressed]="showPageBreaks()"
+        (btnClick)="togglePageBreaks()"
+      >
+        {{ showPageBreaks() ? 'Hide' : 'Show' }} page breaks
+      </app-button>
+
+      <app-button variant="secondary" size="sm" (btnClick)="print()">Print</app-button>
+      <app-button variant="primary" size="sm" (btnClick)="openExport()">Export</app-button>
+    </div>
+  </div>
+
+  <!--
+    The scroll container is the zoom viewport. Zoom is applied as a transform on the
+    stage rather than by changing font sizes, so the layout is identical at every zoom
+    level and what is measured for page breaks stays true.
+  -->
+  <div class="preview-viewport">
+    <div
+      class="preview-stage"
+      [style.transform]="'scale(' + zoom() + ')'"
+      [class.show-breaks]="showPageBreaks()"
+      [style.--page-height]="pageHeightMm + 'mm'"
+    >
+      @if (activeTemplate(); as template) {
+        <app-resume-renderer [document]="data.document" [descriptor]="template" />
+      }
+    </div>
+  </div>
+
+  @if (exportOpen()) {
+    <app-export-dialog
+      [resume]="data"
+      [templates]="templates()"
+      (closed)="exportOpen.set(false)"
+    />
+  }
+}

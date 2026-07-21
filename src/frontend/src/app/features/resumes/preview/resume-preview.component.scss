@@ -1,0 +1,169 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.preview-loading,
+.preview-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  color: var(--text-secondary);
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.toolbar-controls {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.resume-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+
+  h1 {
+    margin: 0;
+    font-size: var(--text-body-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.template-picker { width: 220px; }
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.zoom-value {
+  min-width: 56px;
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+}
+
+.preview-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-6);
+  background: var(--bg-tertiary);
+  display: flex;
+  justify-content: center;
+}
+
+.preview-stage {
+  // Scaling from the top so the page stays pinned under the toolbar as it grows,
+  // rather than drifting out of the viewport from a centre origin.
+  transform-origin: top center;
+  transition: transform var(--duration-fast) var(--ease-fluent);
+  height: fit-content;
+  box-shadow: var(--shadow-16, 0 8px 24px rgb(0 0 0 / 0.15));
+  background: #ffffff;
+  position: relative;
+}
+
+// Page-break guides.
+//
+// Drawn as a repeating gradient over the page at exactly A4 height, so the line falls
+// where the printer will actually break. Purely an overlay: it never affects layout,
+// so turning it on cannot change where content sits.
+.preview-stage.show-breaks::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--page-height) - 1px),
+    rgb(220 38 38 / 0.55) calc(var(--page-height) - 1px),
+    rgb(220 38 38 / 0.55) var(--page-height)
+  );
+}
+
+@media (max-width: 720px) {
+  .preview-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-controls { justify-content: space-between; }
+  .template-picker { width: 100%; }
+  .preview-viewport { padding: var(--space-3); }
+}
+
+// ---------------------------------------------------------------------------
+// Print
+// ---------------------------------------------------------------------------
+
+@media print {
+  // Margins are owned here, once. The renderer zeroes its own padding for print so the
+  // two cannot compound into a double margin.
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  .no-print { display: none !important; }
+
+  .preview-viewport {
+    overflow: visible;
+    padding: 0;
+    background: none;
+    display: block;
+  }
+
+  .preview-stage {
+    // Zoom is a screen affordance. Printing at 150% would produce a resume at the wrong
+    // physical size, so the transform is dropped entirely.
+    transform: none !important;
+    box-shadow: none;
+    height: auto;
+  }
+
+  // Guides are a screen aid and must never appear on paper.
+  .preview-stage.show-breaks::after { display: none; }
+}

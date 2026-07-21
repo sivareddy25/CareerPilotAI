@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { appStateSignal } from '../../core/state/app.state';
+import { HostingService } from '../../core/services/hosting.service';
 import { IconComponent, IconName } from '../../shared/components/icon/icon.component';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 
@@ -45,7 +46,7 @@ export interface SidebarNavItem {
         <div class="sidebar-footer">
           <div class="system-status">
             <span class="status-dot"></span>
-            <span class="status-text">Fluent 2 System v1.0</span>
+            <span class="status-text">{{ hosting.isLocalMode() ? 'Single User (Local Mode)' : 'SaaS Enterprise v1.0' }}</span>
           </div>
         </div>
       </div>
@@ -137,9 +138,18 @@ export interface SidebarNavItem {
 })
 export class SidebarComponent {
   protected readonly appState = appStateSignal;
+  protected readonly hosting = inject(HostingService);
 
   protected readonly mainNavItems: SidebarNavItem[] = [
     { label: 'Overview', url: '/', icon: 'grid', exact: true },
+    { label: 'Recruiter Hub', url: '/communication', icon: 'mail', badge: 'AI' },
+    { label: 'Job Aggregator', url: '/jobs', icon: 'search', badge: 'New', exact: true },
+    { label: 'Hiring Companies', url: '/jobs/companies', icon: 'building' },
+    { label: 'Saved Jobs', url: '/jobs/saved', icon: 'file-text' },
+    { label: 'Template Gallery', url: '/resumes/templates', icon: 'file-text' },
+    { label: 'Live Preview', url: '/resumes/preview', icon: 'eye' },
+    { label: 'Import Wizard', url: '/resumes/import', icon: 'upload' },
+    { label: 'System Health', url: '/system/settings', icon: 'settings' },
     { label: 'Design System', url: '/design-system', icon: 'sparkles', badge: 'Fluent 2' },
   ];
 }
