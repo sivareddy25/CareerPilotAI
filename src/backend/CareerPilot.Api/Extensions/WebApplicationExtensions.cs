@@ -20,7 +20,7 @@ public static class WebApplicationExtensions
         //    the schema is a map of the attack surface.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.MapOpenApi().AllowAnonymous();
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint("/openapi/v1.json", "CareerPilot AI API v1");
@@ -39,11 +39,24 @@ public static class WebApplicationExtensions
 
         app.UseCors(CorsOptions.PolicyName);
 
-        // 5. UseAuthentication() / UseAuthorization() belong here, between CORS and
-        //    endpoint execution. Not wired in this phase.
+        // 5. Rate limiting before authentication, so that a flood of sign-in attempts
+        //    is rejected without ever paying for a BCrypt verification. Placing it
+        //    after would let an attacker force the expensive work anyway.
+        app.UseRateLimiter();
+
+        // 6. Authentication establishes *who* the caller is; authorization then decides
+        //    what they may do. The order is mandatory — authorization inspects the
+        //    principal that authentication produces, and reversing them means every
+        //    request is evaluated as anonymous.
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapControllers();
-        app.MapHealthChecks("/health");
+
+        // Anonymous explicitly: the fallback policy requires an authenticated user on
+        // every endpoint that says nothing, and an orchestrator's health probe has no
+        // token to present.
+        app.MapHealthChecks("/health").AllowAnonymous();
 
         return app;
     }

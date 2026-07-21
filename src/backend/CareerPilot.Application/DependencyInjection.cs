@@ -1,5 +1,7 @@
 using System.Reflection;
 using CareerPilot.Application.Abstractions.Messaging;
+using CareerPilot.Application.Authentication;
+using CareerPilot.Application.Behaviors;
 using CareerPilot.Application.Messaging;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,9 +25,15 @@ public static class DependencyInjection
 
         services.AddHandlers(assembly);
 
-        // Discovers AbstractValidator<T> implementations. None exist yet — validators
-        // arrive with the first feature slice.
+        // Discovers AbstractValidator<T> implementations.
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+
+        // Open generic, so it closes over every command and query the dispatchers
+        // resolve. Registered first, and therefore outermost in the pipeline: a
+        // request must not reach a later behavior — or a handler — unvalidated.
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        services.AddScoped<AuthenticationSessionFactory>();
 
         return services;
     }

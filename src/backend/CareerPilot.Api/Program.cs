@@ -11,11 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddApplication()
-    .AddInfrastructure(builder.Configuration)
+    .AddInfrastructure(builder.Configuration, builder.Environment)
     .AddApi(builder.Configuration);
 
 var app = builder.Build();
 
 app.UseApiPipeline();
+
+await app.SeedIdentityAsync();
 
 app.Run();
