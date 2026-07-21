@@ -1,26 +1,21 @@
+using CareerPilot.Api.Extensions;
+using CareerPilot.Application;
+using CareerPilot.Infrastructure;
+
 // CareerPilot AI — API composition root.
 //
-// Phase 1: host bootstrap only. No business logic, no authentication,
-// no persistence. Layer registration (AddApplication / AddInfrastructure)
-// is wired here in later phases.
+// Each layer owns its own registration. This file states the composition and
+// nothing else: no business logic, no service wiring detail.
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddHealthChecks();
+builder.Services
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration)
+    .AddApi(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-
-    // Only self-redirect locally. In containers TLS terminates at the
-    // reverse proxy / ingress, so redirecting here has no HTTPS port to
-    // target and warns on every request.
-    app.UseHttpsRedirection();
-}
-
-app.MapHealthChecks("/health");
+app.UseApiPipeline();
 
 app.Run();
