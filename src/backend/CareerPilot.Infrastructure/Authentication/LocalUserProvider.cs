@@ -1,4 +1,4 @@
-using CareerPilot.Domain.Entities;
+using CareerPilot.Domain.Entities.Identity;
 using CareerPilot.Infrastructure.Configuration;
 using CareerPilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

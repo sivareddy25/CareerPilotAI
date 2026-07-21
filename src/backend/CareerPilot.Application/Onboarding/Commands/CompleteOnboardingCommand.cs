@@ -29,7 +29,7 @@ internal sealed class CompleteOnboardingCommandHandler(
         if (profile == null)
         {
             profile = UserProfile.CreateFor(userId);
-            await profileRepository.AddAsync(profile, cancellationToken);
+            profileRepository.Add(profile);
         }
 
         profile.CompleteOnboarding(

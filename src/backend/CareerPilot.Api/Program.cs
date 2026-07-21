@@ -3,6 +3,7 @@ using CareerPilot.Application;
 using CareerPilot.Infrastructure;
 using CareerPilot.Infrastructure.Authentication;
 using CareerPilot.Infrastructure.Configuration;
+using CareerPilot.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);

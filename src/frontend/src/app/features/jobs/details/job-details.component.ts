@@ -11,6 +11,7 @@ import {
   SpinnerComponent,
   BreadcrumbComponent,
   BreadcrumbItem,
+  ProgressBarComponent,
 } from '../../../shared/components';
 
 @Component({
@@ -25,6 +26,7 @@ import {
     IconComponent,
     SpinnerComponent,
     BreadcrumbComponent,
+    ProgressBarComponent,
   ],
   template: `
     <div class="details-container">
@@ -36,7 +38,7 @@ import {
         </div>
       } @else if (job(); as j) {
         <div class="details-grid">
-          <!-- Main Job Detail Content -->
+          <!-- LEFT COLUMN: Description, Responsibilities & Requirements -->
           <main class="main-content">
             <app-card>
               <div class="header-row">
@@ -102,8 +104,36 @@ import {
             </app-card>
           </main>
 
-          <!-- Sidebar Company & Metadata Card -->
+          <!-- RIGHT COLUMN: AI Match Score, Resume Recommendation & Cover Letter -->
           <aside class="sidebar-content">
+            <!-- AI Match Analysis Card -->
+            <app-card title="AI Match & Resume Recommendation" class="ai-match-card">
+              <div class="match-score-badge">
+                <div class="score-number">94%</div>
+                <app-badge variant="success">Strong Match</app-badge>
+              </div>
+              <app-progress-bar [value]="94" variant="success" />
+
+              <div class="ai-insights-box">
+                <h4><app-icon name="sparkles" size="sm" /> Key Skill Overlaps</h4>
+                <ul>
+                  <li>C# .NET 9 Clean Architecture & CQRS</li>
+                  <li>Angular Signals & State Management</li>
+                  <li>Playwright Automation & System Design</li>
+                </ul>
+              </div>
+
+              <div class="action-buttons-stack">
+                <app-button variant="primary" [fullWidth]="true" (btnClick)="navigateTo('/resumes/templates')">
+                  <app-icon name="file-text" size="sm" /> Tailor Resume for Job
+                </app-button>
+                <app-button variant="outline" [fullWidth]="true" (btnClick)="navigateTo('/communication')">
+                  <app-icon name="mail" size="sm" /> Generate Cover Letter
+                </app-button>
+              </div>
+            </app-card>
+
+            <!-- Company Card -->
             <app-card title="About Company">
               <h3 class="side-company-name">{{ j.company.name }}</h3>
               <p class="side-company-desc">{{ j.company.description }}</p>
@@ -124,7 +154,7 @@ import {
   styles: [`
     .details-container {
       padding: var(--space-6);
-      max-width: 1200px;
+      max-width: 1300px;
       margin: 0 auto;
     }
     .loading-state {
@@ -134,7 +164,7 @@ import {
     }
     .details-grid {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: 1fr 360px;
       gap: var(--space-6);
       margin-top: var(--space-6);
       align-items: start;
@@ -196,6 +226,54 @@ import {
       gap: var(--space-2);
       margin-top: var(--space-2);
     }
+
+    .sidebar-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+    .ai-match-card {
+      border: 1px solid var(--ai-accent-border);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-tertiary) 100%);
+    }
+    .match-score-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-3);
+    }
+    .score-number {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--brand-primary);
+    }
+    .ai-insights-box {
+      margin: var(--space-4) 0;
+      padding: var(--space-3);
+      border-radius: var(--radius-md);
+      background-color: var(--ai-accent-bg);
+      h4 {
+        margin: 0 0 var(--space-2) 0;
+        font-size: var(--text-body-sm);
+        color: var(--ai-accent-text);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      ul {
+        margin: 0;
+        padding-left: var(--space-4);
+        font-size: var(--text-caption);
+        color: var(--text-secondary);
+      }
+    }
+    .action-buttons-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+
     .side-company-name {
       font-size: var(--text-h3);
       margin: 0 0 var(--space-2) 0;
@@ -212,6 +290,7 @@ import {
 export class JobDetailsComponent implements OnInit {
   private readonly jobService = inject(JobService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly job = this.jobService.activeJob;
   protected readonly isLoading = this.jobService.isLoading;
@@ -226,5 +305,9 @@ export class JobDetailsComponent implements OnInit {
     if (id) {
       this.jobService.getJobById(id).subscribe();
     }
+  }
+
+  protected navigateTo(url: string): void {
+    this.router.navigateByUrl(url);
   }
 }

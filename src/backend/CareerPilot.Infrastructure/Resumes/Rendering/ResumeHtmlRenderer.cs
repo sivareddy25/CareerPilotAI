@@ -171,5 +171,5 @@ public sealed class ResumeHtmlRenderer : IResumeRenderer
     }
 
     private static string HtmlEncode(string? input) =>
-        System.Net.WebUtility.HtmlEncode(input ?? string.Empty);
+        global::System.Net.WebUtility.HtmlEncode(input ?? string.Empty);
 }

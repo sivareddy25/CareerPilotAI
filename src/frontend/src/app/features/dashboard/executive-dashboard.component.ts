@@ -10,6 +10,7 @@ import {
   PageHeaderComponent,
   ProgressBarComponent,
   SpinnerComponent,
+  SkeletonComponent,
 } from '../../shared/components';
 
 @Component({
@@ -24,6 +25,7 @@ import {
     PageHeaderComponent,
     ProgressBarComponent,
     SpinnerComponent,
+    SkeletonComponent,
   ],
   template: `
     <div class="dashboard-container">
@@ -42,8 +44,15 @@ import {
       </app-page-header>
 
       @if (isLoading()) {
-        <div class="loading-wrapper">
-          <app-spinner size="lg" message="Loading executive metrics & pipeline feed..." />
+        <div class="metrics-grid">
+          <app-skeleton height="120px" borderRadius="var(--radius-lg)" />
+          <app-skeleton height="120px" borderRadius="var(--radius-lg)" />
+          <app-skeleton height="120px" borderRadius="var(--radius-lg)" />
+          <app-skeleton height="120px" borderRadius="var(--radius-lg)" />
+        </div>
+        <div class="dashboard-body">
+          <app-skeleton height="320px" borderRadius="var(--radius-lg)" />
+          <app-skeleton height="320px" borderRadius="var(--radius-lg)" />
         </div>
       } @else if (overview(); as data) {
         <!-- KPI Metrics Grid -->

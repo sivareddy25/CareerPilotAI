@@ -70,8 +70,12 @@ internal sealed class JobConfiguration : IEntityTypeConfiguration<Job>
             .HasMaxLength(128)
             .IsRequired();
 
-        builder.Property(j => j.RowVersion)
-            .IsRowVersion();
+        // Optimistic concurrency via PostgreSQL's system column rather than a mapped
+        // byte[]. IsRowVersion() is a SQL Server idiom: on Npgsql it produces a NOT NULL
+        // bytea that the provider never populates, so every insert violates the
+        // constraint. xmin is maintained by the database itself and needs no column.
+        builder.Property<uint>("xmin").IsRowVersion();
+        builder.Ignore(j => j.RowVersion);
 
         builder.HasOne(j => j.Company)
             .WithMany(c => c.Jobs)

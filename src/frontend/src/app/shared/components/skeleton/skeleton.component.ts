@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type SkeletonType = 'text' | 'circle' | 'rect';
+export type SkeletonType = 'text' | 'card' | 'avatar' | 'table' | 'rect';
 
 @Component({
   selector: 'app-skeleton',
@@ -9,44 +9,58 @@ export type SkeletonType = 'text' | 'circle' | 'rect';
   imports: [CommonModule],
   template: `
     <div
-      [class]="skeletonClasses()"
+      class="skeleton-box"
+      [class]="'skeleton-' + type()"
       [style.width]="width()"
       [style.height]="height()"
-      aria-hidden="true"
+      [style.border-radius]="borderRadius()"
     ></div>
   `,
   styles: [`
-    .skeleton {
+    .skeleton-box {
+      display: block;
       background: linear-gradient(
         90deg,
         var(--bg-tertiary) 25%,
-        var(--border-subtle) 50%,
-        var(--bg-tertiary) 75%
+        var(--bg-secondary) 37%,
+        var(--bg-tertiary) 63%
       );
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite linear;
+      background-size: 400% 100%;
+      animation: skeleton-shimmer 1.4s ease infinite;
       border-radius: var(--radius-md);
+    }
+    .skeleton-text {
+      height: 16px;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .skeleton-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .skeleton-card {
+      width: 100%;
+      height: 160px;
+      border-radius: var(--radius-lg);
+    }
+    .skeleton-table {
+      width: 100%;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
 
-      &-text {
-        height: 1rem;
-        margin-bottom: var(--space-2);
-      }
-
-      &-circle {
-        border-radius: var(--radius-circle);
-      }
-
-      &-rect {
-        height: 100px;
-      }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0 50%; }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SkeletonComponent {
-  readonly type = input<SkeletonType>('text');
+  readonly type = input<SkeletonType>('rect');
   readonly width = input<string>('100%');
-  readonly height = input<string>();
-
-  protected skeletonClasses = computed(() => `skeleton skeleton-${this.type()}`);
+  readonly height = input<string>('20px');
+  readonly borderRadius = input<string>('var(--radius-md)');
 }

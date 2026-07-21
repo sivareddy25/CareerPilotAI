@@ -63,12 +63,12 @@ public static class WebApplicationExtensions
         //    what they may do. The order is mandatory — authorization inspects the
         //    principal that authentication produces, and reversing them means every
         //    request is evaluated as anonymous.
-        var hostingOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CareerPilot.Infrastructure.Configuration.HostingOptions>>().Value;
-        if (hostingOptions.IsSaaSMode)
-        {
-            app.UseAuthentication();
-            app.UseAuthorization();
-        }
+        //    Both modes register a scheme — bearer for SaaS, an auto-authenticating local
+        //    one for Local — so this is unconditional. Skipping it in Local mode leaves
+        //    controllers carrying [Authorize] metadata with no middleware to honour it,
+        //    which throws on every request rather than allowing it through.
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapControllers();
 

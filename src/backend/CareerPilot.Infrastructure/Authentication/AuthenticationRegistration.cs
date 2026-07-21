@@ -6,6 +6,7 @@ using CareerPilot.Domain.Configuration;
 using CareerPilot.Infrastructure.Configuration;
 using CareerPilot.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using AuthenticationSchemeOptions = Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,20 +34,32 @@ internal static class AuthenticationRegistration
 
         services.AddSingleton<ISecureCredentialStore, EncryptedFileCredentialStore>();
 
+        // Token and password primitives are hosting-mode independent. The register/login
+        // command handlers depend on them and are discovered by assembly scanning in both
+        // modes, so scoping these to SaaS leaves the container unable to construct them.
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddSingleton<IPasswordHashService, PasswordHashService>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<ITokenBlacklist, TokenBlacklist>();
+
+        // What *does* vary by mode: who the current user is, how permissions resolve,
+        // and whether incoming requests are authenticated by a bearer scheme at all.
         if (hostingOptions.IsLocalMode)
         {
             services.AddScoped<ICurrentUserService, LocalCurrentUserService>();
+            services.AddScoped<IPermissionService, LocalPermissionService>();
             services.AddScoped<LocalUserProvider>();
+
+            services
+                .AddAuthentication(LocalAuthenticationHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, LocalAuthenticationHandler>(
+                    LocalAuthenticationHandler.SchemeName,
+                    configureOptions: null);
         }
         else
         {
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IPermissionService, PermissionService>();
-            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-
-            services.AddSingleton<IPasswordHashService, PasswordHashService>();
-            services.AddSingleton<IJwtTokenService, JwtTokenService>();
-            services.AddSingleton<ITokenBlacklist, TokenBlacklist>();
 
             services.AddJwtBearerAuthentication(configuration, environment);
         }

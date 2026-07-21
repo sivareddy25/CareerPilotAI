@@ -30,3 +30,4 @@ export * from './context-menu/context-menu.component';
 export * from './notification-toast/notification-toast.component';
 export * from './command-bar/command-bar.component';
 export * from './page-header/page-header.component';
+export * from './logo/logo.component';
