@@ -53,6 +53,19 @@ public sealed class LocalUserProvider(
     {
         try
         {
+            await dbContext.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS candidate_answers (
+                    id UUID PRIMARY KEY,
+                    user_id UUID NOT NULL,
+                    question_key VARCHAR(255) NOT NULL,
+                    question_text TEXT NOT NULL,
+                    answer_text TEXT NOT NULL,
+                    category VARCHAR(100) NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL,
+                    last_used_at TIMESTAMPTZ NOT NULL
+                );
+            ");
+
             var profile = await dbContext.UserProfiles
                 .Include(p => p.Skills)
                 .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
