@@ -44,8 +44,8 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('./features/home/home.component'),
-        title: 'CareerPilot AI - Home',
+        redirectTo: 'onboarding',
+        pathMatch: 'full',
       },
       {
         path: 'design-system',
