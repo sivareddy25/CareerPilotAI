@@ -73,11 +73,11 @@ public sealed class LocalUserProvider(
             };
 
             profile.CompleteOnboarding(
-                "Alex Mercer",
+                "Venkata Sivareddy Ganjikunta",
                 "+1 (555) 019-2834",
-                "https://linkedin.com/in/alexmercer",
-                "https://github.com/alexmercer",
-                "https://alexmercer.dev",
+                "https://www.linkedin.com/in/venkata-sivareddy/",
+                "https://github.com/sivareddy25",
+                "https://github.com/sivareddy25",
                 "US Citizen",
                 "$140,000 / year",
                 ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer");

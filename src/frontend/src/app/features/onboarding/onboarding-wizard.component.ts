@@ -365,15 +365,15 @@ export class OnboardingWizardComponent {
   protected readonly setupStatus = signal<string>('');
 
   protected readonly form = this.fb.group({
-    firstName: ['Alex', Validators.required],
-    lastName: ['Mercer', Validators.required],
+    firstName: ['Venkata Sivareddy', Validators.required],
+    lastName: ['Ganjikunta', Validators.required],
     phoneNumber: ['+1 (555) 019-2834', Validators.required],
-    linkedInUrl: ['https://linkedin.com/in/alexmercer'],
-    gitHubUrl: ['https://github.com/alexmercer'],
-    portfolioUrl: ['https://alexmercer.dev'],
+    linkedInUrl: ['https://www.linkedin.com/in/venkata-sivareddy/'],
+    gitHubUrl: ['https://github.com/sivareddy25'],
+    portfolioUrl: ['https://github.com/sivareddy25'],
     workAuthorization: ['US Citizen', Validators.required],
     preferredSalary: ['$140,000 / year', Validators.required],
-    targetJobTitles: ['Senior Full Stack Engineer, Staff Engineer', Validators.required],
+    targetJobTitles: ['.NET Full Stack Developer, Angular Developer, C# Engineer, Full Stack Engineer', Validators.required],
   });
 
   protected nextStep(): void {
