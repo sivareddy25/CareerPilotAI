@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UnansweredQuestionPrompt } from '../../../core/services/automation.service';
 import {
-  ModalComponent,
+  DialogComponent,
   ButtonComponent,
   IconComponent,
 } from '../../../shared/components';
@@ -11,7 +11,7 @@ import {
 @Component({
   selector: 'app-answer-prompt-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, ButtonComponent, IconComponent],
+  imports: [CommonModule, FormsModule, DialogComponent, ButtonComponent, IconComponent],
   template: `
     <app-dialog
       [isOpen]="isOpen()"
