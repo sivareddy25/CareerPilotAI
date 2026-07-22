@@ -7,10 +7,6 @@ export const onboardingGuard: CanActivateFn = (_route, _state) => {
   const onboarding = inject(OnboardingService);
   const router = inject(Router);
 
-  if (onboarding.isOnboardingCompleted()) {
-    return true;
-  }
-
   return onboarding.checkStatus().pipe(
     map((res) => {
       if (res.isCompleted) {
@@ -18,6 +14,6 @@ export const onboardingGuard: CanActivateFn = (_route, _state) => {
       }
       return router.createUrlTree(['/onboarding']);
     }),
-    catchError(() => of(true))
+    catchError(() => of(router.createUrlTree(['/onboarding'])))
   );
 };

@@ -33,7 +33,7 @@ export class OnboardingService {
   private readonly baseUrl = '/api/v1/onboarding';
 
   readonly status = signal<OnboardingStatusDto | null>(null);
-  readonly isOnboardingCompleted = signal<boolean>(true);
+  readonly isOnboardingCompleted = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
 
   checkStatus(): Observable<OnboardingStatusDto> {
@@ -43,9 +43,9 @@ export class OnboardingService {
         this.isOnboardingCompleted.set(res.isCompleted);
       }),
       catchError(() => {
-        const fallback: OnboardingStatusDto = { isCompleted: true };
+        const fallback: OnboardingStatusDto = { isCompleted: false };
         this.status.set(fallback);
-        this.isOnboardingCompleted.set(true);
+        this.isOnboardingCompleted.set(false);
         return of(fallback);
       })
     );
