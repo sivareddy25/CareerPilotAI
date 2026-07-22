@@ -112,11 +112,17 @@ import {
               <div class="form-group">
                 <label>Work Authorization Status *</label>
                 <select formControlName="workAuthorization" class="form-input">
-                  <option value="US Citizen">US Citizen / Permanent Resident (No Sponsorship Required)</option>
-                  <option value="H-1B Visa">H-1B Visa (Sponsorship Required)</option>
-                  <option value="OPT / STEM OPT">F-1 OPT / STEM OPT</option>
-                  <option value="EU Citizen">EU Citizen / Permanent Resident</option>
-                  <option value="Other">Other / International</option>
+                  <option value="US Citizen">US Citizen / Permanent Resident / Green Card (No Sponsorship Required)</option>
+                  <option value="EB Spousal EAD">EB-1 / EB-2 / EB-3 Dependent Spousal EAD (No Sponsorship Required)</option>
+                  <option value="H-4 EAD">H-4 Dependent Spousal EAD (No Sponsorship Required)</option>
+                  <option value="L-2 / E-2 EAD">L-2 / E-2 Spousal EAD (No Sponsorship Required)</option>
+                  <option value="H-1B Visa">H-1B Visa (Sponsorship / Transfer Required)</option>
+                  <option value="OPT / STEM OPT">F-1 OPT / STEM OPT (Current EAD - Future Sponsorship Required)</option>
+                  <option value="O-1 / TN / E-3">O-1 / TN / E-3 Specialty Visa</option>
+                  <option value="EU / UK Citizen">EU / UK Citizen or Permanent Resident</option>
+                  <option value="Canadian Citizen">Canadian Citizen / Permanent Resident</option>
+                  <option value="Other EAD">Other Legal Work Permit (No Sponsorship Required)</option>
+                  <option value="Other">Other / Requires Sponsorship</option>
                 </select>
               </div>
 
