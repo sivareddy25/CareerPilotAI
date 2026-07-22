@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JobService } from '../../../core/services/job.service';
+import { AutomationService, UnansweredQuestionPrompt } from '../../../core/services/automation.service';
 import { JobMatchExplanationDto } from '../../../core/models/job.models';
 import {
   CardComponent,
@@ -15,6 +16,7 @@ import {
   ProgressBarComponent,
   MatchScoreComponent,
 } from '../../../shared/components';
+import { AnswerPromptModalComponent } from '../automation/answer-prompt-modal.component';
 
 @Component({
   selector: 'app-job-details',
@@ -30,6 +32,7 @@ import {
     BreadcrumbComponent,
     ProgressBarComponent,
     MatchScoreComponent,
+    AnswerPromptModalComponent,
   ],
   template: `
     <div class="details-container">
@@ -54,13 +57,19 @@ import {
                   </div>
                 </div>
 
-                @if (j.applyUrl) {
-                  <a [href]="j.applyUrl" target="_blank" rel="noopener noreferrer" class="apply-link">
-                    <app-button variant="primary" size="lg">
-                      <app-icon name="external-link" size="sm" /> Apply on Provider Page
-                    </app-button>
-                  </a>
-                }
+                <div class="action-buttons-header">
+                  <app-button variant="primary" size="lg" [disabled]="automationService.isApplying()" (btnClick)="runAutoApply(j.id)">
+                    <app-icon name="play" size="sm" /> {{ automationService.isApplying() ? 'Playwright Filling Form...' : 'Auto Apply with Playwright' }}
+                  </app-button>
+
+                  @if (j.applyUrl) {
+                    <a [href]="j.applyUrl" target="_blank" rel="noopener noreferrer" class="apply-link">
+                      <app-button variant="outline" size="lg">
+                        <app-icon name="external-link" size="sm" /> Direct Site
+                      </app-button>
+                    </a>
+                  }
+                </div>
               </div>
 
               <div class="meta-pills-row">
@@ -183,12 +192,25 @@ import {
         </div>
       }
     </div>
+
+    <!-- Missing Answer Vault Prompt Modal -->
+    <app-answer-prompt-modal
+      [isOpen]="isModalOpen()"
+      [questions]="missingQuestions()"
+      (closed)="isModalOpen.set(false)"
+      (answersSubmitted)="onAnswersSubmitted($event)"
+    />
   `,
   styles: [`
     .details-container {
       padding: var(--space-6);
       max-width: 1300px;
       margin: 0 auto;
+    }
+    .action-buttons-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
     }
     .loading-state {
       display: flex;
@@ -280,26 +302,6 @@ import {
       font-weight: 800;
       color: var(--brand-primary);
     }
-    .ai-insights-box {
-      margin: var(--space-4) 0;
-      padding: var(--space-3);
-      border-radius: var(--radius-md);
-      background-color: var(--ai-accent-bg);
-      h4 {
-        margin: 0 0 var(--space-2) 0;
-        font-size: var(--text-body-sm);
-        color: var(--ai-accent-text);
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-      }
-      ul {
-        margin: 0;
-        padding-left: var(--space-4);
-        font-size: var(--text-caption);
-        color: var(--text-secondary);
-      }
-    }
     .action-buttons-stack {
       display: flex;
       flex-direction: column;
@@ -365,6 +367,7 @@ import {
 })
 export class JobDetailsComponent implements OnInit {
   private readonly jobService = inject(JobService);
+  protected readonly automationService = inject(AutomationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -374,6 +377,10 @@ export class JobDetailsComponent implements OnInit {
   protected readonly explanation = signal<JobMatchExplanationDto | null>(null);
   protected readonly isExplaining = signal(false);
 
+  protected readonly isModalOpen = signal(false);
+  protected readonly missingQuestions = signal<UnansweredQuestionPrompt[]>([]);
+  private activeJobId: string = '';
+
   protected readonly breadcrumbs: BreadcrumbItem[] = [
     { label: 'Job Aggregator', url: '/jobs' },
     { label: 'Job Details', url: '' },
@@ -382,8 +389,35 @@ export class JobDetailsComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
+      this.activeJobId = id;
       this.jobService.getJobById(id).subscribe();
     }
+  }
+
+  protected runAutoApply(jobId: string): void {
+    this.automationService.executeAutoApply(jobId).subscribe((res) => {
+      if (!res.success && res.missingQuestions && res.missingQuestions.length > 0) {
+        this.missingQuestions.set(res.missingQuestions);
+        this.isModalOpen.set(true);
+      }
+    });
+  }
+
+  protected onAnswersSubmitted(answers: Record<string, string>): void {
+    const questions = this.missingQuestions();
+    let savedCount = 0;
+    questions.forEach((q) => {
+      const val = answers[q.questionKey];
+      if (val) {
+        this.automationService.saveCandidateAnswer(q.questionKey, q.questionText, val).subscribe(() => {
+          savedCount++;
+          if (savedCount === questions.length) {
+            this.isModalOpen.set(false);
+            this.runAutoApply(this.activeJobId);
+          }
+        });
+      }
+    });
   }
 
   protected explainMatch(): void {

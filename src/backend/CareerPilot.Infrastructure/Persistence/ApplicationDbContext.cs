@@ -43,6 +43,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<CareerPilot.Domain.Jobs.Entities.JobSyncLog> JobSyncLogs => Set<CareerPilot.Domain.Jobs.Entities.JobSyncLog>();
 
+    public DbSet<CareerPilot.Domain.Entities.Automation.CandidateAnswer> CandidateAnswers => Set<CareerPilot.Domain.Entities.Automation.CandidateAnswer>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         base.ConfigureConventions(configurationBuilder);

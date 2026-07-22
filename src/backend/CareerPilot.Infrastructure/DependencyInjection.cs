@@ -202,6 +202,7 @@ public static class DependencyInjection
         services.AddScoped<IResumeRepository, ResumeRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IJobRepository, JobRepository>();
+        services.AddScoped<ICandidateAnswerRepository, CandidateAnswerRepository>();
 
         services.AddScoped<IdentitySeeder>();
     }
