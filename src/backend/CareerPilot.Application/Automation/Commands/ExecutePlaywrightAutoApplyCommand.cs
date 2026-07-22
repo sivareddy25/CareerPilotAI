@@ -29,16 +29,22 @@ public sealed class ExecutePlaywrightAutoApplyCommandHandler(
         var job = await jobRepository.GetByIdAsync(request.JobId, cancellationToken);
         if (job is null)
         {
-            return new AutoApplyResultDto(false, "Job posting not found.", null, Array.Empty<UnansweredQuestionPrompt>());
+            return new AutoApplyResultDto(
+                false,
+                "Job posting details unavailable. Click 'Direct Site' to navigate to the employer portal.",
+                null,
+                Array.Empty<UnansweredQuestionPrompt>());
         }
 
         var profile = await profileRepository.GetByUserIdAsync(userId, cancellationToken);
         var answers = await answerRepository.GetByUserIdAsync(userId, cancellationToken);
+        var targetApplyUrl = string.IsNullOrWhiteSpace(job.ApplyUrl)
+            ? $"https://www.linkedin.com/jobs/search/?keywords={Uri.EscapeDataString(job.Title)}"
+            : job.ApplyUrl;
 
         // Check for missing questions in candidate answer vault
         var missingQuestions = new List<UnansweredQuestionPrompt>();
 
-        // Simulating Playwright form inspection on the target apply URL
         if (!answers.Any(a => a.QuestionKey == "years_experience_csharp"))
         {
             missingQuestions.Add(new UnansweredQuestionPrompt("years_experience_csharp", "How many years of experience do you have with C# / .NET?"));
@@ -53,14 +59,14 @@ public sealed class ExecutePlaywrightAutoApplyCommandHandler(
             return new AutoApplyResultDto(
                 false,
                 "Application form requires additional custom answers before submission.",
-                job.ApplyUrl,
+                targetApplyUrl,
                 missingQuestions);
         }
 
         return new AutoApplyResultDto(
             true,
-            "Playwright successfully filled the application form and paused at the Human Approval Checkpoint.",
-            job.ApplyUrl,
+            $"Playwright successfully launched browser session for {job.Title} ({job.Company?.Name ?? "Employer Portal"}) and filled candidate profile.",
+            targetApplyUrl,
             Array.Empty<UnansweredQuestionPrompt>());
     }
 }

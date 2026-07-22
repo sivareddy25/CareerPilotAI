@@ -38,6 +38,13 @@ import { AnswerPromptModalComponent } from '../automation/answer-prompt-modal.co
     <div class="details-container">
       <app-breadcrumb [items]="breadcrumbs" />
 
+      @if (automationService.statusBanner(); as banner) {
+        <div class="automation-banner" [ngClass]="banner.type">
+          <app-icon [name]="banner.type === 'success' ? 'check-circle' : 'alert-triangle'" size="sm" />
+          <span>{{ banner.message }}</span>
+        </div>
+      }
+
       @if (isLoading()) {
         <div class="loading-state">
           <app-spinner size="lg" message="Loading job posting details..." />
@@ -206,6 +213,31 @@ import { AnswerPromptModalComponent } from '../automation/answer-prompt-modal.co
       padding: var(--space-6);
       max-width: 1300px;
       margin: 0 auto;
+    }
+    .automation-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-4);
+      font-size: var(--text-body-sm);
+      font-weight: 500;
+      &.success {
+        background-color: rgba(22, 163, 74, 0.1);
+        border: 1px solid rgba(22, 163, 74, 0.3);
+        color: #16a34a;
+      }
+      &.warning {
+        background-color: rgba(217, 119, 6, 0.1);
+        border: 1px solid rgba(217, 119, 6, 0.3);
+        color: #d97706;
+      }
+      &.error {
+        background-color: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        color: #dc2626;
+      }
     }
     .action-buttons-header {
       display: flex;
