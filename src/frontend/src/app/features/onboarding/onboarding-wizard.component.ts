@@ -65,12 +65,18 @@ import {
           <!-- STEP 1: Contact Details -->
           @if (currentStep() === 1) {
             <div class="step-content">
-              <h3>Step 1: Contact & Online Profiles</h3>
+              <h3>Step 1: Personal Contact & Profiles</h3>
               <p class="step-sub">These details will be populated into ATS form fields automatically.</p>
 
-              <div class="form-group">
-                <label>Full Name *</label>
-                <input type="text" formControlName="displayName" placeholder="e.g. Alex Mercer" class="form-input" />
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>First Name *</label>
+                  <input type="text" formControlName="firstName" placeholder="e.g. Alex" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label>Last Name *</label>
+                  <input type="text" formControlName="lastName" placeholder="e.g. Mercer" class="form-input" />
+                </div>
               </div>
 
               <div class="form-grid">
@@ -340,7 +346,8 @@ export class OnboardingWizardComponent {
   protected readonly setupStatus = signal<string>('');
 
   protected readonly form = this.fb.group({
-    displayName: ['Alex Mercer', Validators.required],
+    firstName: ['Alex', Validators.required],
+    lastName: ['Mercer', Validators.required],
     phoneNumber: ['+1 (555) 019-2834', Validators.required],
     linkedInUrl: ['https://linkedin.com/in/alexmercer'],
     gitHubUrl: ['https://github.com/alexmercer'],
@@ -375,9 +382,15 @@ export class OnboardingWizardComponent {
 
     this.setupStatus.set('Saving your profile…');
 
+    const firstName = val.firstName || '';
+    const lastName = val.lastName || '';
+    const displayName = `${firstName} ${lastName}`.trim();
+
     this.onboardingService
       .completeOnboarding({
-        displayName: val.displayName || '',
+        firstName,
+        lastName,
+        displayName,
         phoneNumber: val.phoneNumber || '',
         linkedInUrl: val.linkedInUrl || '',
         gitHubUrl: val.gitHubUrl || '',
@@ -387,9 +400,6 @@ export class OnboardingWizardComponent {
         targetJobTitles: val.targetJobTitles || '',
       })
       .pipe(
-        // Upload the resume if one was chosen. Each step swallows its own failure: a resume that
-        // fails to parse, or a provider that is briefly unreachable, must not strand the user on
-        // the wizard after their profile has already been saved.
         switchMap(() => {
           if (!file) {
             return of(null);

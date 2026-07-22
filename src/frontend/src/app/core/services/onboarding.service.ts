@@ -15,6 +15,8 @@ export interface OnboardingStatusDto {
 }
 
 export interface CompleteOnboardingPayload {
+  firstName: string;
+  lastName: string;
   displayName: string;
   phoneNumber: string;
   linkedInUrl: string;

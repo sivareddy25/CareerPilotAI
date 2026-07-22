@@ -6,6 +6,8 @@ using CareerPilot.Domain.Entities.Profiles;
 namespace CareerPilot.Application.Onboarding.Commands;
 
 public sealed record CompleteOnboardingCommand(
+    string FirstName,
+    string LastName,
     string DisplayName,
     string PhoneNumber,
     string LinkedInUrl,
@@ -18,6 +20,7 @@ public sealed record CompleteOnboardingCommand(
 internal sealed class CompleteOnboardingCommandHandler(
     ICurrentUserService currentUserService,
     IUserProfileRepository profileRepository,
+    IUserRepository userRepository,
     IUnitOfWork unitOfWork)
     : ICommandHandler<CompleteOnboardingCommand, bool>
 {
@@ -25,6 +28,12 @@ internal sealed class CompleteOnboardingCommandHandler(
     {
         var userId = currentUserService.UserId ?? Guid.Empty;
         var profile = await profileRepository.GetByUserIdAsync(userId, cancellationToken);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
+
+        if (user != null)
+        {
+            user.UpdateName(command.FirstName, command.LastName);
+        }
 
         if (profile == null)
         {
@@ -32,8 +41,12 @@ internal sealed class CompleteOnboardingCommandHandler(
             profileRepository.Add(profile);
         }
 
+        var fullName = string.IsNullOrWhiteSpace(command.DisplayName)
+            ? $"{command.FirstName} {command.LastName}".Trim()
+            : command.DisplayName;
+
         profile.CompleteOnboarding(
-            command.DisplayName,
+            fullName,
             command.PhoneNumber,
             command.LinkedInUrl,
             command.GitHubUrl,
