@@ -6,6 +6,7 @@ import { catchError, of, switchMap } from 'rxjs';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { ResumeService } from '../../core/services/resume.service';
 import { JobService } from '../../core/services/job.service';
+import { formatSalaryToAnnual } from '../../core/utils/salary-formatter';
 import {
   CardComponent,
   ButtonComponent,
@@ -127,8 +128,15 @@ import {
               </div>
 
               <div class="form-group">
-                <label>Target Minimum Annual Salary (USD) *</label>
-                <input type="text" formControlName="preferredSalary" placeholder="$140,000 / year" class="form-input" />
+                <label>Target Minimum Annual Salary *</label>
+                <input
+                  type="text"
+                  formControlName="preferredSalary"
+                  placeholder="e.g. 140000, 140k, 12k/mo, or 75/hr"
+                  class="form-input"
+                  (blur)="onSalaryBlur()"
+                />
+                <span class="helper-text">Accepts numbers (140000), shorthands (140k), monthly (12k/mo), or hourly (75/hr) — auto-formats to $ per year.</span>
               </div>
             </div>
           }
@@ -268,6 +276,11 @@ import {
       margin-bottom: var(--space-4);
       label { font-weight: 600; font-size: var(--text-body-sm); }
     }
+    .helper-text {
+      font-size: var(--text-caption);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -375,6 +388,12 @@ export class OnboardingWizardComponent {
     }
   }
 
+  protected onSalaryBlur(): void {
+    const raw = this.form.controls.preferredSalary.value || '';
+    const formatted = formatSalaryToAnnual(raw);
+    this.form.controls.preferredSalary.setValue(formatted);
+  }
+
   protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile.set(input.files?.[0] ?? null);
@@ -382,6 +401,8 @@ export class OnboardingWizardComponent {
 
   protected onSubmit(): void {
     if (this.form.invalid) return;
+
+    this.onSalaryBlur();
 
     const val = this.form.value;
     const file = this.selectedFile();
