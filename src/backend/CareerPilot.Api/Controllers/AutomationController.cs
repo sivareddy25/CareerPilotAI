@@ -26,6 +26,7 @@ public sealed class AutomationController : BaseApiController
     }
 
     [HttpPost("apply")]
+    [HttpPost("/api/v1/automation/apply")]
     [ProducesResponseType(typeof(AutoApplyResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ExecuteAutoApply([FromBody] ExecutePlaywrightAutoApplyCommand command, CancellationToken cancellationToken)
     {
