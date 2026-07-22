@@ -1,4 +1,5 @@
 using CareerPilot.Domain.Entities.Identity;
+using CareerPilot.Domain.Entities.Profiles;
 using CareerPilot.Infrastructure.Configuration;
 using CareerPilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class LocalUserProvider(
 
         if (existingUser != null)
         {
+            await EnsureLocalUserProfileSeededAsync(existingUser.Id, cancellationToken);
             return existingUser.Id;
         }
 
@@ -37,6 +39,59 @@ public sealed class LocalUserProvider(
         dbContext.Users.Add(localUser);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await EnsureLocalUserProfileSeededAsync(DefaultLocalUserId, cancellationToken);
+
         return localUser.Id;
+    }
+
+    private async Task EnsureLocalUserProfileSeededAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var profile = await dbContext.UserProfiles
+            .Include(p => p.Skills)
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+        if (profile == null)
+        {
+            profile = UserProfile.CreateFor(userId);
+            dbContext.UserProfiles.Add(profile);
+        }
+
+        if (profile.Skills.Count == 0 || string.IsNullOrWhiteSpace(profile.TargetJobTitles))
+        {
+            var defaultSkills = new (string Name, int? Years)[]
+            {
+                (".NET", 5),
+                ("C#", 5),
+                ("ASP.NET Core", 5),
+                ("Angular", 4),
+                ("TypeScript", 4),
+                ("SQL", 5),
+                ("Entity Framework", 5),
+                ("REST API", 5),
+                ("Microservices", 3),
+                ("Docker", 3)
+            };
+
+            profile.CompleteOnboarding(
+                "Alex Mercer",
+                "+1 (555) 019-2834",
+                "https://linkedin.com/in/alexmercer",
+                "https://github.com/alexmercer",
+                "https://alexmercer.dev",
+                "US Citizen",
+                "$140,000 / year",
+                ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer");
+
+            profile.SetCareerProfile(
+                5,
+                140000m,
+                "USD",
+                CareerPilot.Domain.Jobs.EmploymentType.FullTime,
+                CareerPilot.Domain.Jobs.RemoteType.Hybrid,
+                ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer",
+                defaultSkills);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

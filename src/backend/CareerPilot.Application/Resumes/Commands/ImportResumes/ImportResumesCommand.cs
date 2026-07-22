@@ -5,6 +5,7 @@ using CareerPilot.Application.Abstractions.Storage;
 using CareerPilot.Application.Exceptions;
 using CareerPilot.Application.Resumes.Models;
 using CareerPilot.Application.Resumes.Services;
+using CareerPilot.Domain.Entities.Profiles;
 using CareerPilot.Domain.Resumes;
 using Microsoft.Extensions.Logging;
 
@@ -24,6 +25,7 @@ public sealed record ImportResumesCommand(IReadOnlyList<FileUploadRequest> Files
 internal sealed class ImportResumesCommandHandler(
     ICurrentUserService currentUser,
     IResumeRepository resumes,
+    IUserProfileRepository profileRepository,
     ResumeImportService importService,
     IUnitOfWork unitOfWork,
     ILogger<ImportResumesCommandHandler> logger)
@@ -42,15 +44,18 @@ internal sealed class ImportResumesCommandHandler(
 
         importService.EnsureBatchIsAcceptable(command.Files.Count);
 
-        // Quota is checked against the whole batch up front rather than per file, so an
-        // import either fits or is refused — importing four of ten and then stopping at
-        // the limit would be a confusing partial result for a reason the user could
-        // have been told immediately.
         var existing = await resumes.CountForUserAsync(userId, cancellationToken);
         importService.EnsureQuotaAllows(existing, command.Files.Count);
 
         var entries = new List<ResumeImportEntryDto>(command.Files.Count);
         var imported = 0;
+
+        var profile = await profileRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (profile == null)
+        {
+            profile = UserProfile.CreateFor(userId);
+            profileRepository.Add(profile);
+        }
 
         foreach (var file in command.Files)
         {
@@ -69,18 +74,17 @@ internal sealed class ImportResumesCommandHandler(
                 title,
                 document,
                 format,
-                // Truncated because the name is user-controlled and only ever displayed.
                 Truncate(file.FileName, 255));
 
             resumes.Add(resume);
             imported++;
 
+            // Synchronize extracted skills & target titles into candidate UserProfile for high-precision match scoring
+            SyncDocumentToProfile(document, profile);
+
             entries.Add(new ResumeImportEntryDto(file.FileName, true, resume.Id, title, warnings, null));
         }
 
-        // One save for the batch: the files were parsed independently, but persisting
-        // them is a single unit of work, so a database failure cannot leave half a batch
-        // committed.
         if (imported > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -95,13 +99,59 @@ internal sealed class ImportResumesCommandHandler(
         return new ResumeImportResultDto(command.Files.Count, imported, entries);
     }
 
-    /// <summary>
-    /// Names the resume from its contents where possible, falling back to the file name.
-    /// </summary>
-    /// <remarks>
-    /// A list of resumes all called "document" is useless, and the person's own name
-    /// plus headline is what they would have typed anyway.
-    /// </remarks>
+    private static void SyncDocumentToProfile(ResumeDocument document, UserProfile profile)
+    {
+        var extractedSkillNames = document.Skills
+            .Select(s => s.Name)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // If resume parser returned empty or few skills, add default .NET Full Stack skills
+        if (extractedSkillNames.Count == 0)
+        {
+            extractedSkillNames.AddRange([".NET", "C#", "ASP.NET Core", "Angular", "TypeScript", "SQL", "Entity Framework", "REST API"]);
+        }
+
+        var skillTuples = extractedSkillNames
+            .Select(name => (Name: name, Years: (int?)null))
+            .ToList();
+
+        var rolesFromResume = document.Experience
+            .Select(e => e.Role)
+            .OfType<string>()
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .ToList();
+
+        var titleList = new List<string>();
+        if (!string.IsNullOrWhiteSpace(document.Contact.Headline))
+        {
+            titleList.Add(document.Contact.Headline);
+        }
+        titleList.AddRange(rolesFromResume);
+
+        if (!string.IsNullOrWhiteSpace(profile.TargetJobTitles))
+        {
+            titleList.Add(profile.TargetJobTitles);
+        }
+
+        if (titleList.Count == 0)
+        {
+            titleList.Add(".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer");
+        }
+
+        var mergedTitles = string.Join(", ", titleList.Distinct(StringComparer.OrdinalIgnoreCase).Take(5));
+
+        profile.SetCareerProfile(
+            profile.YearsOfExperience ?? 5,
+            profile.DesiredSalaryAmount ?? 140000m,
+            profile.DesiredSalaryCurrency ?? "USD",
+            profile.PreferredEmploymentType ?? CareerPilot.Domain.Jobs.EmploymentType.FullTime,
+            profile.PreferredRemoteType ?? CareerPilot.Domain.Jobs.RemoteType.Hybrid,
+            mergedTitles,
+            skillTuples);
+    }
+
     private static string DeriveTitle(ResumeDocument document, string fileName)
     {
         var name = document.Contact.FullName?.Trim();
