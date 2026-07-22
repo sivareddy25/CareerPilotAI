@@ -60,7 +60,14 @@ public sealed class GreenhouseJobProvider(
 
         var payloads = new List<RawJobPayload>();
 
-        foreach (var board in options.Boards)
+        var boards = options.Boards.Concat(new[]
+        {
+            "cloudflare", "datadog", "segment", "okta", "auth0", "plaid", "hashicorp",
+            "postman", "grafana", "cypress", "circleci", "docker", "elastic", "mongodb",
+            "redis", "launchdarkly", "sentry", "newrelic", "pagerduty", "fastly"
+        }).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        foreach (var board in boards)
         {
             try
             {
