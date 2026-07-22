@@ -61,20 +61,26 @@ internal sealed class GetJobsQueryHandler(
     private async Task<PagedJobsResultDto> RankedAsync(GetJobsQuery query, UserProfile profile, CancellationToken cancellationToken)
     {
         var poolFilter = query.Filter with { PageNumber = 1, PageSize = RankablePoolCap };
-        var (pool, totalCount) = await jobRepository.GetPagedAsync(poolFilter, cancellationToken);
+        var (pool, _) = await jobRepository.GetPagedAsync(poolFilter, cancellationToken);
 
-        var scored = pool
+        var scoredList = pool
             .Select(job => (Dto: ToDto(job, profile), job.PostedAt))
+            .Where(x => (x.Dto.MatchScore ?? 0) >= 35)
             .OrderByDescending(x => x.Dto.MatchScore ?? 0)
             .ThenByDescending(x => x.PostedAt)
             .Select(x => x.Dto)
+            .ToList();
+
+        var totalMatchingCount = scoredList.Count;
+
+        var pagedItems = scoredList
             .Skip((query.Filter.PageNumber - 1) * query.Filter.PageSize)
             .Take(query.Filter.PageSize)
             .ToList();
 
-        var totalPages = (int)Math.Ceiling(totalCount / (double)query.Filter.PageSize);
+        var totalPages = (int)Math.Ceiling(totalMatchingCount / (double)query.Filter.PageSize);
 
-        return new PagedJobsResultDto(scored, totalCount, query.Filter.PageNumber, query.Filter.PageSize, Math.Max(1, totalPages));
+        return new PagedJobsResultDto(pagedItems, totalMatchingCount, query.Filter.PageNumber, query.Filter.PageSize, Math.Max(1, totalPages));
     }
 
     private JobDto ToDto(Job job, UserProfile? profile) =>
