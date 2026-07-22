@@ -51,52 +51,44 @@ public sealed class LocalUserProvider(
 
     private async Task EnsureLocalUserProfileSeededAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var profile = await dbContext.UserProfiles
-            .Include(p => p.Skills)
-            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
-
-        if (profile == null)
+        try
         {
-            profile = UserProfile.CreateFor(userId);
-            dbContext.UserProfiles.Add(profile);
-        }
+            var profile = await dbContext.UserProfiles
+                .Include(p => p.Skills)
+                .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
-        if (profile.Skills.Count == 0 || string.IsNullOrWhiteSpace(profile.TargetJobTitles))
-        {
-            var defaultSkills = new (string Name, int? Years)[]
+            if (profile == null)
             {
-                (".NET", 5),
-                ("C#", 5),
-                ("ASP.NET Core", 5),
-                ("Angular", 4),
-                ("TypeScript", 4),
-                ("SQL", 5),
-                ("Entity Framework", 5),
-                ("REST API", 5),
-                ("Microservices", 3),
-                ("Docker", 3)
-            };
+                profile = UserProfile.CreateFor(userId);
+                dbContext.UserProfiles.Add(profile);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
 
-            profile.CompleteOnboarding(
-                "Venkata Sivareddy Ganjikunta",
-                "+1 (555) 019-2834",
-                "https://www.linkedin.com/in/venkata-sivareddy/",
-                "https://github.com/sivareddy25",
-                "https://github.com/sivareddy25",
-                "US Citizen",
-                "$140,000 / year",
-                ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer");
+            var hasDotNetOrAngular = profile.Skills.Any(s => s.Name.Equals(".NET", StringComparison.OrdinalIgnoreCase) || s.Name.Equals("Angular", StringComparison.OrdinalIgnoreCase));
 
-            profile.SetCareerProfile(
-                5,
-                140000m,
-                "USD",
-                EmploymentType.FullTime,
-                RemoteType.Hybrid,
-                ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer",
-                defaultSkills);
+            if (!hasDotNetOrAngular || string.IsNullOrWhiteSpace(profile.TargetJobTitles))
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    "UPDATE user_profiles SET target_job_titles = {0}, work_authorization = {1}, display_name = {2} WHERE id = {3}",
+                    ".NET Full Stack Developer, Angular Developer, C# Software Engineer, Full Stack Engineer",
+                    "US Citizen",
+                    "Venkata Sivareddy Ganjikunta",
+                    profile.Id);
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("DELETE FROM profile_skill WHERE profile_id = {0}", profile.Id);
+
+                var skills = new[] { ".NET", "C#", "ASP.NET Core", "Angular", "TypeScript", "SQL", "Entity Framework", "REST API", "Microservices", "Docker" };
+                foreach (var skill in skills)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync(
+                        "INSERT INTO profile_skill (id, profile_id, name, years_of_experience) VALUES ({0}, {1}, {2}, 5)",
+                        Guid.NewGuid(), profile.Id, skill);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Local profile seeding warning handled safely.");
         }
     }
 
