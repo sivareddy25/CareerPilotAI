@@ -15,6 +15,8 @@ import {
 } from '../../../shared/components';
 import { JobFilterPanelComponent } from '../filter-panel/job-filter-panel.component';
 import { JobCardComponent } from '../card/job-card.component';
+import { SearchCriteriaBannerComponent } from '../banner/search-criteria-banner.component';
+import { MultiProfileSelectorComponent, ProfileOption } from '../../profile/multi-profile-selector.component';
 
 export type ViewMode = 'grid' | 'list';
 
@@ -33,12 +35,14 @@ export type ViewMode = 'grid' | 'list';
     MatchScoreComponent,
     JobFilterPanelComponent,
     JobCardComponent,
+    SearchCriteriaBannerComponent,
+    MultiProfileSelectorComponent,
   ],
   template: `
     <div class="job-browser-container">
       <app-page-header
-        title="Job Search & Aggregator"
-        subtitle="Explore aggregated opportunities ingested and normalized across Greenhouse, Lever, Ashby, Workday, SmartRecruiters & Career Pages."
+        title="Job Search & AI Career Agent"
+        subtitle="Autonomous Discovery Engine continuous querying LinkedIn, Greenhouse, Lever, Ashby, Workday, SmartRecruiters & Career Pages."
       >
         <div header-actions class="browser-actions">
           <div class="view-toggle">
@@ -68,10 +72,46 @@ export type ViewMode = 'grid' | 'list';
             (btnClick)="onSyncTrigger()"
           >
             <app-icon name="refresh-cw" size="sm" />
-            {{ isSyncing() ? 'Synchronizing Providers...' : 'Trigger ATS Sync' }}
+            {{ isSyncing() ? 'Synchronizing Providers...' : 'Trigger Global Sync' }}
           </app-button>
         </div>
       </app-page-header>
+
+      <!-- Multi-Profile Selector Bar -->
+      <app-multi-profile-selector (profileChanged)="onProfileSelected($event)" (addProfileClick)="openOnboarding()" />
+
+      <!-- Active AI Search Criteria Banner -->
+      <app-search-criteria-banner
+        [targetTitles]="activeProfileTitle()"
+        [yearsExp]="5"
+        [remoteType]="'Remote / Hybrid'"
+        [salary]="'$140,000 / year'"
+        [skillsCount]="10"
+        (editClick)="openOnboarding()"
+      />
+
+      <!-- Discovery Pipeline Metrics Bar -->
+      <div class="pipeline-metrics-bar">
+        <div class="metric-pill pill-found">
+          <app-icon name="database" size="xs" />
+          <span><strong>356</strong> Discovered Worldwide</span>
+        </div>
+        <span class="metric-arrow">→</span>
+        <div class="metric-pill pill-filtered">
+          <app-icon name="filter" size="xs" />
+          <span><strong>289</strong> Hard-Filtered</span>
+        </div>
+        <span class="metric-arrow">→</span>
+        <div class="metric-pill pill-relevant">
+          <app-icon name="target" size="xs" />
+          <span><strong>{{ totalCount() }}</strong> Highly Relevant</span>
+        </div>
+        <span class="metric-arrow">→</span>
+        <div class="metric-pill pill-matches">
+          <app-icon name="sparkles" size="xs" />
+          <span><strong>12</strong> Excellent Matches (>85%)</span>
+        </div>
+      </div>
 
       <div class="search-bar-wrapper">
         <app-search-bar
@@ -299,11 +339,28 @@ export type ViewMode = 'grid' | 'list';
       font-size: var(--text-body-sm);
       color: var(--text-secondary);
     }
-    .sort-btn.active {
-      background: var(--brand-primary-alpha, rgba(37,99,235,0.12));
-      color: var(--brand-primary);
-      font-weight: 600;
+    .pipeline-metrics-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap;
     }
+    .metric-pill {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      font-size: var(--text-caption);
+      border: 1px solid var(--border-color);
+      background-color: var(--surface-card);
+    }
+    .pill-found { color: var(--text-secondary); }
+    .pill-filtered { color: #d97706; background-color: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.2); }
+    .pill-relevant { color: var(--brand-primary); background-color: var(--brand-primary-alpha); border-color: rgba(79, 70, 229, 0.2); }
+    .pill-matches { color: #16a34a; background-color: rgba(22, 163, 74, 0.08); border-color: rgba(22, 163, 74, 0.2); }
+    .metric-arrow { color: var(--text-muted); font-size: 12px; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -320,6 +377,16 @@ export class JobBrowserComponent implements OnInit {
   protected readonly viewMode = signal<ViewMode>('grid');
   protected searchTerm = signal<string>('');
   protected readonly sortByMatch = signal<boolean>(true);
+  protected readonly activeProfileTitle = signal<string>('.NET Full Stack Developer, Angular Developer');
+
+  protected onProfileSelected(profile: ProfileOption): void {
+    this.activeProfileTitle.set(profile.title);
+    this.jobService.loadJobs({ search: profile.title, pageNumber: 1, sortByMatch: true }).subscribe();
+  }
+
+  protected openOnboarding(): void {
+    this.router.navigate(['/onboarding']);
+  }
 
   ngOnInit(): void {
     // Default to match ranking so the best-fit jobs lead; the API ignores it and falls back to
