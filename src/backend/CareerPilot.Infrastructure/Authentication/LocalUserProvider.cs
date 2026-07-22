@@ -94,8 +94,8 @@ public sealed class LocalUserProvider(
 
     private async Task EnsureDotNetJobsSeededAsync(CancellationToken cancellationToken)
     {
-        var hasDotNetJobs = await dbContext.Jobs.AnyAsync(j => j.Title.Contains(".NET") || j.Title.Contains("Angular"), cancellationToken);
-        if (hasDotNetJobs)
+        var count = await dbContext.Jobs.CountAsync(j => j.Title.Contains(".NET") || j.Title.Contains("Angular") || j.Title.Contains("C#"), cancellationToken);
+        if (count >= 10)
         {
             return;
         }
@@ -107,6 +107,38 @@ public sealed class LocalUserProvider(
         {
             company = Company.Create("Microsoft Enterprise Systems", "https://microsoft.com", "https://careers.microsoft.com", "Cloud Technology", "Enterprise software solutions.");
             dbContext.Companies.Add(company);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var vanguard = await dbContext.Companies.FirstOrDefaultAsync(c => c.Name == "Vanguard Financial Tech", cancellationToken);
+        if (vanguard == null)
+        {
+            vanguard = Company.Create("Vanguard Financial Tech", "https://vanguard.com", "https://vanguard.com/careers", "FinTech", "Global investment management systems.");
+            dbContext.Companies.Add(vanguard);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var fidelity = await dbContext.Companies.FirstOrDefaultAsync(c => c.Name == "Fidelity Investments", cancellationToken);
+        if (fidelity == null)
+        {
+            fidelity = Company.Create("Fidelity Investments", "https://fidelity.com", "https://jobs.fidelity.com", "FinTech", "Financial services technology.");
+            dbContext.Companies.Add(fidelity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var slalom = await dbContext.Companies.FirstOrDefaultAsync(c => c.Name == "Slalom Consulting", cancellationToken);
+        if (slalom == null)
+        {
+            slalom = Company.Create("Slalom Consulting", "https://slalom.com", "https://slalom.com/careers", "Consulting", "Enterprise digital platform solutions.");
+            dbContext.Companies.Add(slalom);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var accenture = await dbContext.Companies.FirstOrDefaultAsync(c => c.Name == "Accenture Technology", cancellationToken);
+        if (accenture == null)
+        {
+            accenture = Company.Create("Accenture Technology", "https://accenture.com", "https://accenture.com/careers", "IT Services", "Global software transformation.");
+            dbContext.Companies.Add(accenture);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -170,14 +202,98 @@ public sealed class LocalUserProvider(
                 "https://jobs.ashbyhq.com/microsoft/fullstack-dotnet-103",
                 "en",
                 null,
-                "hash-dotnet-103")
+                "hash-dotnet-103"),
+
+            Job.Create(
+                "dotnet-job-104",
+                JobProviderKind.LinkedIn,
+                "Senior C# / .NET / Angular Enterprise Architect",
+                vanguard.Id,
+                "Vanguard is seeking a Senior C# / .NET / Angular Enterprise Architect to lead financial technology transformation. Key tech stack: C#, .NET 9, ASP.NET Core, Angular, TypeScript, Entity Framework, REST API, SQL Server, Microservices, and Azure.",
+                "Expert level C#, .NET Core, Angular, TypeScript, Entity Framework, Microservices, SQL Server, Web APIs.",
+                "Architect scalable microservice backend APIs and Angular enterprise frontends.",
+                "Bonus package, 401k match up to 10%, health, dental, tuition reimbursement.",
+                Location.Create("United States", "PA", "Malvern", RemoteType.Hybrid),
+                SalaryRange.Create(160000m, 205000m, "USD", "Yearly"),
+                EmploymentType.FullTime,
+                ExperienceLevel.SeniorLevel,
+                DateTimeOffset.UtcNow,
+                null,
+                "https://www.linkedin.com/jobs/view/senior-dotnet-angular-architect-vanguard",
+                "en",
+                null,
+                "hash-dotnet-104"),
+
+            Job.Create(
+                "dotnet-job-105",
+                JobProviderKind.LinkedIn,
+                "Principal .NET & Angular Full Stack Engineer",
+                fidelity.Id,
+                "Fidelity Technology is looking for a Principal Full Stack Engineer with strong experience in .NET Core, C#, Angular, TypeScript, Entity Framework, REST APIs, SQL Server, and Docker.",
+                "5+ years of C#, ASP.NET Core, Angular, TypeScript, Entity Framework, SQL Server, Microservices.",
+                "Deliver enterprise web applications and API microservices supporting millions of active trade transactions.",
+                "Generous salary, stock options, remote work flexibility, wellness stipend.",
+                Location.Create("United States", "NC", "Raleigh", RemoteType.Remote),
+                SalaryRange.Create(150000m, 190000m, "USD", "Yearly"),
+                EmploymentType.FullTime,
+                ExperienceLevel.Lead,
+                DateTimeOffset.UtcNow,
+                null,
+                "https://www.linkedin.com/jobs/view/principal-dotnet-angular-fidelity",
+                "en",
+                null,
+                "hash-dotnet-105"),
+
+            Job.Create(
+                "dotnet-job-106",
+                JobProviderKind.LinkedIn,
+                "Senior Full Stack Developer (.NET 9 / Angular 18 / SQL)",
+                slalom.Id,
+                "Slalom is building Next-Gen enterprise web portals using C#, .NET 9, ASP.NET Core, Angular 18, TypeScript, Entity Framework Core, Microservices, and REST API.",
+                "C#, .NET, ASP.NET Core, Angular, TypeScript, SQL Server, Entity Framework, REST API, Docker.",
+                "Collaborate with client stakeholders to build modern Angular frontend UIs and resilient C# backend REST microservices.",
+                "Paid certification training, profit-sharing, full insurance benefits.",
+                Location.Create("United States", "IL", "Chicago", RemoteType.Remote),
+                SalaryRange.Create(140000m, 180000m, "USD", "Yearly"),
+                EmploymentType.FullTime,
+                ExperienceLevel.SeniorLevel,
+                DateTimeOffset.UtcNow,
+                null,
+                "https://www.linkedin.com/jobs/view/full-stack-dotnet-angular-slalom",
+                "en",
+                null,
+                "hash-dotnet-106"),
+
+            Job.Create(
+                "dotnet-job-107",
+                JobProviderKind.LinkedIn,
+                "Full Stack Engineer (.NET Core / Angular / Microservices)",
+                accenture.Id,
+                "Accenture Digital Engineering is seeking a Full Stack Engineer specialized in .NET Core, C#, Angular, TypeScript, Entity Framework, REST API, Docker, and SQL.",
+                "Core experience with .NET, C#, ASP.NET Core, Angular, TypeScript, Entity Framework, SQL, Docker, Microservices.",
+                "Build cloud-native microservices and Angular web apps for global enterprise clients.",
+                "Global mobility programs, health & dental, learning credits.",
+                Location.Create("United States", "WA", "Seattle", RemoteType.Hybrid),
+                SalaryRange.Create(138000m, 175000m, "USD", "Yearly"),
+                EmploymentType.FullTime,
+                ExperienceLevel.MidLevel,
+                DateTimeOffset.UtcNow,
+                null,
+                "https://www.linkedin.com/jobs/view/fullstack-dotnet-angular-accenture",
+                "en",
+                null,
+                "hash-dotnet-107")
         };
 
         foreach (var j in dotnetJobs)
         {
-            j.SetSkills([".NET", "C#", "ASP.NET Core", "Angular", "TypeScript", "SQL", "Entity Framework", "REST API", "Microservices", "Docker"]);
-            j.SetTags([".NET", "Angular", "Full Stack", "C#"]);
-            dbContext.Jobs.Add(j);
+            var exists = await dbContext.Jobs.AnyAsync(x => x.ExternalJobId == j.ExternalJobId && x.Source == j.Source, cancellationToken);
+            if (!exists)
+            {
+                j.SetSkills([".NET", "C#", "ASP.NET Core", "Angular", "TypeScript", "SQL", "Entity Framework", "REST API", "Microservices", "Docker"]);
+                j.SetTags([".NET", "Angular", "Full Stack", "C#"]);
+                dbContext.Jobs.Add(j);
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

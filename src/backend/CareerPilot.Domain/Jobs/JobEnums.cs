@@ -36,6 +36,7 @@ public enum JobProviderKind
     SmartRecruiters = 4,
     CareerPage = 5,
     Custom = 6,
+    LinkedIn = 7,
 }
 
 public enum JobStatus

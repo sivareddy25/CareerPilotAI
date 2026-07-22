@@ -32,12 +32,12 @@ namespace CareerPilot.Application.Jobs.Matching;
 /// </remarks>
 internal sealed partial class JobMatchScoringService : IJobMatchScoringService
 {
-    private const double SkillsWeight = 0.45;
+    private const double SkillsWeight = 0.60;
     private const double TitleWeight = 0.25;
-    private const double SeniorityWeight = 0.15;
-    private const double LocationWeight = 0.10;
+    private const double SeniorityWeight = 0.10;
+    private const double LocationWeight = 0.05;
     private const double EmploymentWeight = 0.05;
-    private const double SalaryWeight = 0.15;
+    private const double SalaryWeight = 0.10;
 
     // Words too generic to identify a role, stripped before comparing target titles to a posting
     // title so "Senior Engineer" vs "Staff Engineer" doesn't match purely on "engineer"… while
