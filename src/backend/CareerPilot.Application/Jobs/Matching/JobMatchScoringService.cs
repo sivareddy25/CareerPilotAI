@@ -134,44 +134,53 @@ internal sealed partial class JobMatchScoringService : IJobMatchScoringService
     /// <summary>Profile skills that appear as whole tokens in the posting text.</summary>
     private static List<string> MatchSkills(IReadOnlyList<string> skills, string haystack)
     {
-        var rawTokens = WordToken().Matches(haystack).Select(m => m.Value).ToList();
-
-        // Two token sets: case-insensitive for normal skills, case-sensitive for the ambiguous
-        // ones. Whole-token comparison rather than substring — substring matching reports "Java"
-        // for a "JavaScript" posting. The tokenizer keeps #, + and . so "C#", "C++" and ".NET"
-        // survive as single tokens on both sides.
-        var tokens = rawTokens.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var casedTokens = rawTokens.ToHashSet(StringComparer.Ordinal);
+        if (string.IsNullOrWhiteSpace(haystack) || skills.Count == 0)
+        {
+            return [];
+        }
 
         return skills
-            .Where(skill => SkillMatches(skill, tokens, casedTokens))
+            .Where(skill => !string.IsNullOrWhiteSpace(skill) && SkillMatches(skill.Trim(), haystack))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
-    private static bool SkillMatches(string skill, HashSet<string> tokens, HashSet<string> casedTokens)
+    private static bool SkillMatches(string skill, string haystack)
     {
-        var skillTokens = SkillTokens(skill).ToList();
+        var cleanSkill = skill.Trim();
+        if (string.IsNullOrWhiteSpace(cleanSkill)) return false;
 
-        if (skillTokens.Count == 0)
+        if (cleanSkill.Equals(".NET", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            return Regex.IsMatch(haystack, @"(?:\.net|dotnet|\bnet\b)", RegexOptions.IgnoreCase);
         }
 
-        // A single-token skill that collides with an English word must appear in the posting with
-        // its skill capitalisation ("Go", "GO", "Rust"), not as the lowercase common word — no
-        // matter how the user typed it in their profile.
-        if (skillTokens.Count == 1 && AmbiguousSkills.Contains(skillTokens[0]))
+        if (cleanSkill.Equals("C#", StringComparison.OrdinalIgnoreCase))
         {
-            var word = skillTokens[0];
-            var titleCase = char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant();
-            return casedTokens.Contains(titleCase) || casedTokens.Contains(word.ToUpperInvariant());
+            return Regex.IsMatch(haystack, @"(?:c#|csharp|\bc#\b)", RegexOptions.IgnoreCase);
         }
 
-        return skillTokens.All(tokens.Contains);
+        if (cleanSkill.Equals("C++", StringComparison.OrdinalIgnoreCase))
+        {
+            return Regex.IsMatch(haystack, @"(?:cpp|c\+\+)", RegexOptions.IgnoreCase);
+        }
+
+        if (cleanSkill.Equals("ASP.NET Core", StringComparison.OrdinalIgnoreCase)
+            || cleanSkill.Equals("ASP.NET", StringComparison.OrdinalIgnoreCase))
+        {
+            return Regex.IsMatch(haystack, @"asp\.net", RegexOptions.IgnoreCase);
+        }
+
+        if (cleanSkill.Equals("REST API", StringComparison.OrdinalIgnoreCase)
+            || cleanSkill.Equals("REST APIs", StringComparison.OrdinalIgnoreCase))
+        {
+            return Regex.IsMatch(haystack, @"rest|restful|api", RegexOptions.IgnoreCase);
+        }
+
+        var escaped = Regex.Escape(cleanSkill);
+        var pattern = $@"(?:^|[^\w#+.]){escaped}(?:$|[^\w#+.])";
+        return Regex.IsMatch(haystack, pattern, RegexOptions.IgnoreCase);
     }
-
-    private static IEnumerable<string> SkillTokens(string skill) =>
-        WordToken().Matches(skill).Select(m => m.Value);
 
     private static (int Score, string Detail) ScoreTitle(string targetTitles, string jobTitle)
     {
