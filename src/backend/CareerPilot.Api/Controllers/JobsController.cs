@@ -26,6 +26,7 @@ public sealed class JobsController : BaseApiController
         [FromQuery] decimal? minSalary,
         [FromQuery] string? skill,
         [FromQuery] Guid? companyId,
+        [FromQuery] bool sortByMatch = false,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
@@ -43,7 +44,7 @@ public sealed class JobsController : BaseApiController
             pageNumber,
             pageSize);
 
-        var result = await Queries.Query(new GetJobsQuery(filter), cancellationToken);
+        var result = await Queries.Query(new GetJobsQuery(filter, sortByMatch), cancellationToken);
 
         Response.Headers.CacheControl = "private, max-age=60";
         return Ok(result);
@@ -68,6 +69,32 @@ public sealed class JobsController : BaseApiController
 
         Response.Headers.CacheControl = "private, max-age=120";
         return Ok(job);
+    }
+
+    /// <summary>AI explanation of why one job fits the caller's career profile.</summary>
+    /// <remarks>
+    /// Separate from <see cref="GetJobById"/> because it makes a local model call that can take
+    /// seconds — kept off the fast job-detail read so opening a job stays instant and the
+    /// explanation is fetched only when the user asks for it.
+    /// </remarks>
+    [HttpGet("{id:guid}/match-explanation")]
+    [ProducesResponseType(typeof(JobMatchExplanationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<JobMatchExplanationDto>> ExplainMatch(Guid id, CancellationToken cancellationToken)
+    {
+        var explanation = await Queries.Query(new ExplainJobMatchQuery(id), cancellationToken);
+
+        if (explanation is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Job not found",
+                Detail = $"Job with id '{id}' was not found.",
+            });
+        }
+
+        return Ok(explanation);
     }
 
     /// <summary>Triggers job synchronization across external ATS providers.</summary>

@@ -33,6 +33,23 @@ public sealed class UserProfileConfiguration : EntityTypeConfiguration<UserProfi
         builder.Property(profile => profile.GitHubUrl).HasMaxLength(ProfileRules.UrlMaxLength);
         builder.Property(profile => profile.PortfolioUrl).HasMaxLength(ProfileRules.UrlMaxLength);
 
+        // Structured career data for job matching. Enums stored as int, matching the
+        // convention used for preferences above.
+        builder.Property(profile => profile.DesiredSalaryCurrency).HasMaxLength(3).IsFixedLength();
+        builder.Property(profile => profile.PreferredEmploymentType).HasConversion<int?>();
+        builder.Property(profile => profile.PreferredRemoteType).HasConversion<int?>();
+
+        // Skills as a child table. Backing field access because the collection is exposed
+        // read-only and mutated only through SetCareerProfile.
+        builder.HasMany(profile => profile.Skills)
+            .WithOne()
+            .HasForeignKey(skill => skill.ProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(UserProfile.Skills))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         // Owned: preferences become columns on this table rather than a joined row.
         // They are always read and written with the profile, so a separate table would
         // buy nothing and cost a join on every profile load.

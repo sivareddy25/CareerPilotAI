@@ -34,9 +34,16 @@ public sealed class JobSynchronizationService(
             var rawJobs = await provider.FetchJobsAsync(cancellationToken);
             processed = rawJobs.Count;
 
+            // Every external id this fetch returned, so postings the provider has since dropped
+            // can be deactivated below. This is why a job removed from a board — or one of the
+            // old demo postings from a now-empty stub provider — stops appearing and no longer
+            // sends the user to a dead "no job found" apply page.
+            var seenExternalIds = new HashSet<string>(StringComparer.Ordinal);
+
             foreach (var raw in rawJobs)
             {
                 var normalizedJob = await normalizationService.NormalizeAsync(raw, cancellationToken);
+                seenExternalIds.Add(normalizedJob.ExternalJobId);
                 var existingJob = await jobRepository.GetByExternalIdAsync(normalizedJob.ExternalJobId, normalizedJob.Source, cancellationToken);
 
                 if (existingJob is null)
@@ -76,7 +83,14 @@ public sealed class JobSynchronizationService(
                 }
             }
 
-            var deactivated = await jobRepository.DeactivateExpiredJobsAsync(cancellationToken);
+            // Two deactivation paths: postings past their explicit expiry date, and postings
+            // this provider no longer lists at all. The reached-this-point guarantee that the
+            // fetch succeeded (no exception escaped FetchJobsAsync) is what makes the second
+            // safe — an empty set here means "provider genuinely lists nothing", not "fetch failed".
+            var expiredCount = await jobRepository.DeactivateExpiredJobsAsync(cancellationToken);
+            var missingCount = await jobRepository.DeactivateMissingAsync(providerKind, seenExternalIds, cancellationToken);
+            var deactivated = expiredCount + missingCount;
+
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             var completedAt = DateTimeOffset.UtcNow;

@@ -1,24 +1,18 @@
-export interface Environment {
-  production: boolean;
-  environmentName: string;
-  apiBaseUrl: string;
-  logging: {
-    enabled: boolean;
-    level: 'debug' | 'info' | 'warn' | 'error';
-  };
-  featureFlags: {
-    enableAnalytics: boolean;
-    enableNewDashboard: boolean;
-  };
-}
+import { Environment } from './environment.model';
 
+// Default / production environment. A same-origin relative base — the deployed API is served
+// from the same host as the app, and the api-base-url interceptor leaves same-origin paths
+// untouched. Local development replaces this file with environment.development.ts (see the
+// fileReplacements in angular.json), which points at the standalone backend on :5080.
+// The previous value (http://localhost:5000) was a dead port — macOS AirPlay listens there — so
+// every API call failed and the UI silently showed mock data.
 export const environment: Environment = {
-  production: false,
-  environmentName: 'development',
-  apiBaseUrl: 'http://localhost:5000/api/v1',
+  production: true,
+  environmentName: 'production',
+  apiBaseUrl: '/api/v1',
   logging: {
-    enabled: true,
-    level: 'debug',
+    enabled: false,
+    level: 'error',
   },
   featureFlags: {
     enableAnalytics: false,

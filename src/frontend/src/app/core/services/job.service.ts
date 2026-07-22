@@ -5,6 +5,7 @@ import {
   JobDto,
   CompanyDto,
   JobFilterParams,
+  JobMatchExplanationDto,
   PagedJobsResultDto,
   JobSyncResultDto,
   RemoteType,
@@ -47,6 +48,7 @@ export class JobService {
     if (currentFilter.minSalary) params = params.set('minSalary', currentFilter.minSalary.toString());
     if (currentFilter.skill) params = params.set('skill', currentFilter.skill);
     if (currentFilter.companyId) params = params.set('companyId', currentFilter.companyId);
+    if (currentFilter.sortByMatch) params = params.set('sortByMatch', 'true');
     if (currentFilter.pageNumber) params = params.set('pageNumber', currentFilter.pageNumber.toString());
     if (currentFilter.pageSize) params = params.set('pageSize', currentFilter.pageSize.toString());
 
@@ -82,6 +84,13 @@ export class JobService {
         return of(found);
       })
     );
+  }
+
+  /** On-demand AI explanation of why a job fits the user's profile. May take seconds (local LLM). */
+  explainMatch(jobId: string): Observable<JobMatchExplanationDto | null> {
+    return this.http
+      .get<JobMatchExplanationDto>(`${this.baseUrl}/${jobId}/match-explanation`)
+      .pipe(catchError(() => of(null)));
   }
 
   loadCompanies(): Observable<CompanyDto[]> {

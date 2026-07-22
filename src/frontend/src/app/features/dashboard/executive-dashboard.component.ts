@@ -9,8 +9,8 @@ import {
   IconComponent,
   PageHeaderComponent,
   ProgressBarComponent,
-  SpinnerComponent,
   SkeletonComponent,
+  MatchScoreComponent,
 } from '../../shared/components';
 
 @Component({
@@ -24,8 +24,8 @@ import {
     IconComponent,
     PageHeaderComponent,
     ProgressBarComponent,
-    SpinnerComponent,
     SkeletonComponent,
+    MatchScoreComponent,
   ],
   template: `
     <div class="dashboard-container">
@@ -128,6 +128,28 @@ import {
         <div class="dashboard-body">
           <!-- Left Column: Activity Feed & Resume Trends -->
           <div class="main-column">
+            <app-card title="Top Matches for You" class="top-matches-card">
+              @if (data.recommendedJobs.length === 0) {
+                <p class="empty-matches">No jobs yet. Trigger a sync from the Jobs page to populate matches.</p>
+              } @else {
+                <div class="match-list">
+                  @for (job of data.recommendedJobs; track job.id) {
+                    <button type="button" class="match-row" (click)="navigateToJob(job.id)">
+                      <div class="match-company-logo">{{ job.company.name.charAt(0) }}</div>
+                      <div class="match-body">
+                        <h4 class="match-job-title">{{ job.title }}</h4>
+                        <p class="match-meta">{{ job.company.name }} • {{ job.location.displayLocation }}</p>
+                      </div>
+                      <app-match-score [score]="job.matchScore" [summary]="job.matchSummary" />
+                    </button>
+                  }
+                </div>
+                <app-button variant="outline" [fullWidth]="true" (btnClick)="navigateTo('/jobs')">
+                  View all ranked jobs
+                </app-button>
+              }
+            </app-card>
+
             <app-card title="Activity Feed & Telemetry">
               <div class="activity-list">
                 @for (act of data.activityFeed; track act.id) {
@@ -161,6 +183,9 @@ import {
           <div class="side-column">
             <app-card title="Quick Actions">
               <div class="quick-stack">
+                <app-button variant="primary" [fullWidth]="true" (btnClick)="navigateTo('/profile/career')">
+                  <app-icon name="sparkles" size="sm" /> Edit Career Profile (AI Matching)
+                </app-button>
                 <app-button variant="outline" [fullWidth]="true" (btnClick)="navigateTo('/jobs')">
                   <app-icon name="search" size="sm" /> Search Aggregated Jobs
                 </app-button>
@@ -361,6 +386,25 @@ import {
       color: var(--text-secondary);
       margin: 0;
     }
+    .empty-matches { color: var(--text-muted); font-size: var(--text-body-sm); margin: 0; }
+    .match-list { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
+    .match-row {
+      display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left;
+      padding: var(--space-2); background: transparent; border: none;
+      border-radius: var(--radius-md); cursor: pointer;
+    }
+    .match-row:hover { background: var(--surface-muted, rgba(0,0,0,0.03)); }
+    .match-company-logo {
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: var(--radius-md);
+      background-color: var(--brand-primary-alpha, rgba(37,99,235,0.12)); color: var(--brand-primary);
+      font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .match-body { flex: 1; min-width: 0; }
+    .match-job-title {
+      margin: 0; font-size: var(--text-body-sm); font-weight: 600; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .match-meta { margin: 0; font-size: var(--text-caption); color: var(--text-muted); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -377,5 +421,9 @@ export class ExecutiveDashboardComponent implements OnInit {
 
   protected navigateTo(url: string): void {
     this.router.navigateByUrl(url);
+  }
+
+  protected navigateToJob(id: string): void {
+    this.router.navigate(['/jobs', id]);
   }
 }

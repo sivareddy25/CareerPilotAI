@@ -11,7 +11,7 @@ import {
   SpinnerComponent,
   EmptyStateComponent,
   IconComponent,
-  BadgeComponent,
+  MatchScoreComponent,
 } from '../../../shared/components';
 import { JobFilterPanelComponent } from '../filter-panel/job-filter-panel.component';
 import { JobCardComponent } from '../card/job-card.component';
@@ -30,7 +30,7 @@ export type ViewMode = 'grid' | 'list';
     SpinnerComponent,
     EmptyStateComponent,
     IconComponent,
-    BadgeComponent,
+    MatchScoreComponent,
     JobFilterPanelComponent,
     JobCardComponent,
   ],
@@ -79,6 +79,24 @@ export type ViewMode = 'grid' | 'list';
           [value]="searchTerm()"
           (searchChange)="onSearch($event)"
         />
+        <div class="sort-toggle" role="group" aria-label="Sort jobs">
+          <button
+            type="button"
+            class="sort-btn"
+            [class.active]="sortByMatch()"
+            (click)="toggleSort(true)"
+          >
+            <app-icon name="sparkles" size="xs" /> Best match
+          </button>
+          <button
+            type="button"
+            class="sort-btn"
+            [class.active]="!sortByMatch()"
+            (click)="toggleSort(false)"
+          >
+            Most recent
+          </button>
+        </div>
       </div>
 
       <div class="browser-body">
@@ -116,7 +134,7 @@ export type ViewMode = 'grid' | 'list';
                       </p>
                     </div>
                     <div class="list-actions">
-                      <app-badge variant="success">94% Match</app-badge>
+                      <app-match-score [score]="job.matchScore" [summary]="job.matchSummary" />
                       <app-button variant="outline" size="sm">
                         View Position
                       </app-button>
@@ -257,6 +275,35 @@ export type ViewMode = 'grid' | 'list';
       justify-content: center;
       margin-top: var(--space-6);
     }
+    .search-bar-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+    .search-bar-wrapper app-search-bar { flex: 1 1 320px; }
+    .sort-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .sort-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-3);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: var(--text-body-sm);
+      color: var(--text-secondary);
+    }
+    .sort-btn.active {
+      background: var(--brand-primary-alpha, rgba(37,99,235,0.12));
+      color: var(--brand-primary);
+      font-weight: 600;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -272,22 +319,30 @@ export class JobBrowserComponent implements OnInit {
 
   protected readonly viewMode = signal<ViewMode>('grid');
   protected searchTerm = signal<string>('');
+  protected readonly sortByMatch = signal<boolean>(true);
 
   ngOnInit(): void {
-    this.jobService.loadJobs().subscribe();
+    // Default to match ranking so the best-fit jobs lead; the API ignores it and falls back to
+    // recency when no scorable profile exists, so this is safe even before onboarding.
+    this.jobService.loadJobs({ sortByMatch: this.sortByMatch() }).subscribe();
   }
 
   protected onSearch(term: string): void {
     this.searchTerm.set(term);
-    this.jobService.loadJobs({ search: term, pageNumber: 1 }).subscribe();
+    this.jobService.loadJobs({ search: term, pageNumber: 1, sortByMatch: this.sortByMatch() }).subscribe();
   }
 
   protected onFilterChange(filter: JobFilterParams): void {
-    this.jobService.loadJobs({ ...filter, search: this.searchTerm() }).subscribe();
+    this.jobService.loadJobs({ ...filter, search: this.searchTerm(), sortByMatch: this.sortByMatch() }).subscribe();
   }
 
   protected onPageChange(page: number): void {
-    this.jobService.loadJobs({ pageNumber: page }).subscribe();
+    this.jobService.loadJobs({ pageNumber: page, sortByMatch: this.sortByMatch() }).subscribe();
+  }
+
+  protected toggleSort(byMatch: boolean): void {
+    this.sortByMatch.set(byMatch);
+    this.jobService.loadJobs({ pageNumber: 1, sortByMatch: byMatch }).subscribe();
   }
 
   protected onSyncTrigger(): void {

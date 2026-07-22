@@ -426,6 +426,37 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
+            modelBuilder.Entity("CareerPilot.Domain.Entities.Profiles.ProfileSkill", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_id");
+
+                    b.Property<int?>("YearsOfExperience")
+                        .HasColumnType("integer")
+                        .HasColumnName("years_of_experience");
+
+                    b.HasKey("Id")
+                        .HasName("pk_profile_skill");
+
+                    b.HasIndex("ProfileId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_profile_skill_profile_name");
+
+                    b.ToTable("profile_skill", (string)null);
+                });
+
             modelBuilder.Entity("CareerPilot.Domain.Entities.Profiles.UserProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -464,6 +495,16 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("deleted_by");
 
+                    b.Property<decimal?>("DesiredSalaryAmount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("desired_salary_amount");
+
+                    b.Property<string>("DesiredSalaryCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("desired_salary_currency")
+                        .IsFixedLength();
+
                     b.Property<string>("DisplayName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -497,10 +538,18 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(512)")
                         .HasColumnName("portfolio_url");
 
+                    b.Property<int?>("PreferredEmploymentType")
+                        .HasColumnType("integer")
+                        .HasColumnName("preferred_employment_type");
+
                     b.Property<string>("PreferredLanguage")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
                         .HasColumnName("preferred_language");
+
+                    b.Property<int?>("PreferredRemoteType")
+                        .HasColumnType("integer")
+                        .HasColumnName("preferred_remote_type");
 
                     b.Property<string>("PreferredSalary")
                         .HasColumnType("text")
@@ -545,6 +594,10 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                     b.Property<string>("WorkAuthorization")
                         .HasColumnType("text")
                         .HasColumnName("work_authorization");
+
+                    b.Property<int?>("YearsOfExperience")
+                        .HasColumnType("integer")
+                        .HasColumnName("years_of_experience");
 
                     b.HasKey("Id")
                         .HasName("pk_user_profiles");
@@ -1023,6 +1076,16 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CareerPilot.Domain.Entities.Profiles.ProfileSkill", b =>
+                {
+                    b.HasOne("CareerPilot.Domain.Entities.Profiles.UserProfile", null)
+                        .WithMany("Skills")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_profile_skill_user_profiles_profile_id");
+                });
+
             modelBuilder.Entity("CareerPilot.Domain.Entities.Profiles.UserProfile", b =>
                 {
                     b.HasOne("CareerPilot.Domain.Entities.Identity.User", "User")
@@ -1228,6 +1291,11 @@ namespace CareerPilot.Infrastructure.Persistence.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("CareerPilot.Domain.Entities.Profiles.UserProfile", b =>
+                {
+                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("CareerPilot.Domain.Jobs.Entities.Company", b =>

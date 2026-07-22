@@ -91,6 +91,26 @@ export interface JobDto {
   skills: string[];
   tags: string[];
   lastSynchronizedAt: string;
+  // Present only when the caller has a scorable career profile; null otherwise.
+  matchScore?: number | null;
+  matchedSkills?: string[] | null;
+  matchComponents?: MatchComponentDto[] | null;
+  matchSummary?: string | null;
+}
+
+export interface MatchComponentDto {
+  name: string;
+  score: number;
+  detail: string;
+}
+
+export interface JobMatchExplanationDto {
+  jobId: string;
+  matchScore?: number | null;
+  strengths: string[];
+  gaps: string[];
+  recommendation: string;
+  generatedByAi: boolean;
 }
 
 export interface JobFilterParams {
@@ -103,6 +123,7 @@ export interface JobFilterParams {
   minSalary?: number;
   skill?: string;
   companyId?: string;
+  sortByMatch?: boolean;
   pageNumber?: number;
   pageSize?: number;
 }

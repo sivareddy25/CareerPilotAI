@@ -27,6 +27,10 @@ internal sealed class JobRepository(ApplicationDbContext dbContext) : IJobReposi
             .Include(j => j.Skills)
             .Include(j => j.Tags)
             .AsNoTracking()
+            // Only live postings. Deactivated jobs — expired, or dropped from their provider's
+            // feed — are kept for history and duplicate detection but must not surface in the
+            // browse list, or the user clicks Apply on a posting that no longer exists.
+            .Where(j => j.Status == JobStatus.Active)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -112,5 +116,29 @@ internal sealed class JobRepository(ApplicationDbContext dbContext) : IJobReposi
         }
 
         return expiredJobs.Count;
+    }
+
+    public async Task<int> DeactivateMissingAsync(
+        JobProviderKind source,
+        IReadOnlyCollection<string> seenExternalIds,
+        CancellationToken cancellationToken = default)
+    {
+        // Load-then-mutate rather than ExecuteUpdate so the change flows through the same
+        // UnitOfWork/SaveChanges as the sync's inserts and updates, keeping the whole
+        // synchronization atomic. A provider holds a few hundred rows at most, so materialising
+        // the stale ones is cheap. The seen set is checked in memory because it can hold
+        // hundreds of ids — larger than is comfortable to inline into a SQL IN clause.
+        var activeJobs = await dbContext.Jobs
+            .Where(j => j.Source == source && j.Status == JobStatus.Active)
+            .ToListAsync(cancellationToken);
+
+        var stale = activeJobs.Where(j => !seenExternalIds.Contains(j.ExternalJobId)).ToList();
+
+        foreach (var job in stale)
+        {
+            job.Deactivate();
+        }
+
+        return stale.Count;
     }
 }

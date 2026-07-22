@@ -138,24 +138,26 @@ internal static partial class JobContentSanitizer
     }
 
     /// <summary>
-    /// Infers employment type from the title and description. Boards in scope do not expose
-    /// it as a field, and defaulting everything to full-time would make the filter meaningless.
+    /// Infers employment type from the job title. Boards in scope do not expose it as a field,
+    /// and defaulting everything to full-time would make the filter meaningless.
     /// </summary>
-    public static EmploymentType DetectEmploymentType(string title, string description)
+    /// <remarks>
+    /// Title only, deliberately. Descriptions were tried and are far too noisy: a full-time
+    /// sales posting says "contract" while describing the work ("contract negotiation",
+    /// "enterprise contracts") and was classified as contract employment. The title is where
+    /// an employer states the arrangement on purpose, so a miss there means it is full-time —
+    /// which is the correct default anyway.
+    /// </remarks>
+    public static EmploymentType DetectEmploymentType(string title)
     {
-        // Title wins over description: a full-time posting frequently mentions the word
-        // "contract" in passing, but rarely carries it in the title.
-        foreach (var text in (string[])[title, description])
+        if (string.IsNullOrWhiteSpace(title))
         {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                continue;
-            }
-
-            if (InternshipMarker().IsMatch(text)) return EmploymentType.Internship;
-            if (PartTimeMarker().IsMatch(text)) return EmploymentType.PartTime;
-            if (ContractMarker().IsMatch(text)) return EmploymentType.Contract;
+            return EmploymentType.FullTime;
         }
+
+        if (InternshipMarker().IsMatch(title)) return EmploymentType.Internship;
+        if (PartTimeMarker().IsMatch(title)) return EmploymentType.PartTime;
+        if (ContractMarker().IsMatch(title)) return EmploymentType.Contract;
 
         return EmploymentType.FullTime;
     }

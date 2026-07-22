@@ -39,4 +39,13 @@ public sealed record JobDto(
     string Language,
     IReadOnlyList<string> Skills,
     IReadOnlyList<string> Tags,
-    DateTimeOffset LastSynchronizedAt);
+    DateTimeOffset LastSynchronizedAt,
+    // Null when the caller has no scorable career profile. A number here is the deterministic
+    // match; the component breakdown and matched skills ride alongside for the "why" panel.
+    int? MatchScore = null,
+    IReadOnlyList<string>? MatchedSkills = null,
+    IReadOnlyList<MatchComponentDto>? MatchComponents = null,
+    string? MatchSummary = null);
+
+/// <summary>One dimension of a job's match score, for the "why" breakdown.</summary>
+public sealed record MatchComponentDto(string Name, int Score, string Detail);

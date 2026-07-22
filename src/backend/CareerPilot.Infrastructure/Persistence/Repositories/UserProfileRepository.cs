@@ -15,6 +15,9 @@ internal sealed class UserProfileRepository(ApplicationDbContext context) : IUse
     public Task<UserProfile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default) =>
         context.UserProfiles
             .Include(profile => profile.User)
+            // Skills are part of the aggregate and the match scorer reads them on the same
+            // load, so they are included rather than lazy-loaded into a second query.
+            .Include(profile => profile.Skills)
             .FirstOrDefaultAsync(profile => profile.UserId == userId, cancellationToken);
 
     public void Add(UserProfile profile) => context.UserProfiles.Add(profile);

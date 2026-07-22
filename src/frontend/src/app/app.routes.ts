@@ -3,6 +3,7 @@ import { AuthenticatedLayoutComponent } from './layouts/authenticated-layout/aut
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { onboardingGuard } from './core/guards/onboarding.guard';
 
 export const routes: Routes = [
   {
@@ -36,7 +37,10 @@ export const routes: Routes = [
   {
     path: '',
     component: AuthenticatedLayoutComponent,
-    canActivate: [authGuard],
+    // onboardingGuard redirects first-run users (no completed profile) to the wizard. It sits
+    // after authGuard so the check only runs for an authenticated user, and it guards the whole
+    // authenticated area — the /onboarding route lives outside this layout, so there is no loop.
+    canActivate: [authGuard, onboardingGuard],
     children: [
       {
         path: '',
@@ -133,6 +137,12 @@ export const routes: Routes = [
             path: 'edit',
             loadComponent: () => import('./features/profile/edit/profile-edit.component'),
             title: 'CareerPilot AI - Edit Profile',
+          },
+          {
+            path: 'career',
+            loadComponent: () =>
+              import('./features/profile/career/career-profile.component').then((m) => m.CareerProfileComponent),
+            title: 'CareerPilot AI - Career Profile',
           },
           {
             path: 'account',

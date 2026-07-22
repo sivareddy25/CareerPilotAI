@@ -2,7 +2,10 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { catchError, of, switchMap } from 'rxjs';
 import { OnboardingService } from '../../core/services/onboarding.service';
+import { ResumeService } from '../../core/services/resume.service';
+import { JobService } from '../../core/services/job.service';
 import {
   CardComponent,
   ButtonComponent,
@@ -24,6 +27,7 @@ import {
     BadgeComponent,
     IconComponent,
     PageHeaderComponent,
+    SpinnerComponent,
   ],
   template: `
     <div class="onboarding-container">
@@ -130,23 +134,46 @@ import {
             </div>
           }
 
-          <!-- STEP 4: Resume & Confirmation -->
+          <!-- STEP 4: Resume upload & confirmation -->
           @if (currentStep() === 4) {
             <div class="step-content">
-              <h3>Step 4: Primary Resume & Automation Checkpoint</h3>
-              <p class="step-sub">Confirm your candidate setup to enable Playwright ATS auto-filling.</p>
+              <h3>Step 4: Upload Your Resume</h3>
+              <p class="step-sub">We'll analyze it to sharpen your job matches, then pull in openings from every provider.</p>
 
-              <div class="resume-dropzone">
-                <app-icon name="upload" size="lg" />
-                <h4>Primary Resume Uploaded</h4>
-                <p>Default candidate profile ready for Playwright ATS form population.</p>
-                <app-badge variant="success">Resume Ready</app-badge>
-              </div>
+              <input
+                #fileInput
+                type="file"
+                accept=".pdf,.docx,.json"
+                hidden
+                (change)="onFileSelected($event)"
+              />
+
+              @if (selectedFile(); as file) {
+                <div class="resume-dropzone selected" (click)="fileInput.click()">
+                  <app-icon name="file-text" size="lg" />
+                  <h4>{{ file.name }}</h4>
+                  <p>{{ (file.size / 1024) | number:'1.0-0' }} KB • click to replace</p>
+                  <app-badge variant="success">Ready to upload</app-badge>
+                </div>
+              } @else {
+                <div class="resume-dropzone" (click)="fileInput.click()">
+                  <app-icon name="upload" size="lg" />
+                  <h4>Choose your resume</h4>
+                  <p>PDF, DOCX or JSON — optional, but it makes matching much better.</p>
+                </div>
+              }
 
               <div class="info-alert">
                 <app-icon name="sparkles" size="sm" />
-                <span>CareerPilot AI will auto-fill applications and pause for your approval before final submission.</span>
+                <span>On completion we'll upload your resume and immediately search all job providers — your ranked matches appear on the dashboard.</span>
               </div>
+
+              @if (setupStatus()) {
+                <div class="setup-status">
+                  <app-spinner size="sm" />
+                  <span>{{ setupStatus() }}</span>
+                </div>
+              }
             </div>
           }
 
@@ -258,9 +285,22 @@ import {
       text-align: center;
       background-color: var(--bg-secondary);
       margin-bottom: var(--space-4);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
 
       h4 { margin: var(--space-2) 0; }
       p { color: var(--text-secondary); font-size: var(--text-body-sm); margin-bottom: var(--space-3); }
+    }
+    .resume-dropzone:hover { border-color: var(--brand-primary); }
+    .resume-dropzone.selected {
+      border-style: solid;
+      border-color: var(--color-success, #16a34a);
+      background-color: color-mix(in srgb, var(--color-success, #16a34a) 8%, transparent);
+    }
+    .setup-status {
+      display: flex; align-items: center; gap: var(--space-2);
+      margin-top: var(--space-3);
+      font-size: var(--text-body-sm); color: var(--text-secondary);
     }
 
     .info-alert {
@@ -289,10 +329,15 @@ import {
 export class OnboardingWizardComponent {
   private readonly fb = inject(FormBuilder);
   private readonly onboardingService = inject(OnboardingService);
+  private readonly resumeService = inject(ResumeService);
+  private readonly jobService = inject(JobService);
   private readonly router = inject(Router);
 
   protected readonly currentStep = signal<number>(1);
   protected readonly isSubmitting = this.onboardingService.isSubmitting;
+  protected readonly selectedFile = signal<File | null>(null);
+  // Progress text while the post-submit chain runs (upload → job search). Empty when idle.
+  protected readonly setupStatus = signal<string>('');
 
   protected readonly form = this.fb.group({
     displayName: ['Alex Mercer', Validators.required],
@@ -317,10 +362,19 @@ export class OnboardingWizardComponent {
     }
   }
 
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedFile.set(input.files?.[0] ?? null);
+  }
+
   protected onSubmit(): void {
     if (this.form.invalid) return;
 
     const val = this.form.value;
+    const file = this.selectedFile();
+
+    this.setupStatus.set('Saving your profile…');
+
     this.onboardingService
       .completeOnboarding({
         displayName: val.displayName || '',
@@ -332,7 +386,24 @@ export class OnboardingWizardComponent {
         preferredSalary: val.preferredSalary || '',
         targetJobTitles: val.targetJobTitles || '',
       })
+      .pipe(
+        // Upload the resume if one was chosen. Each step swallows its own failure: a resume that
+        // fails to parse, or a provider that is briefly unreachable, must not strand the user on
+        // the wizard after their profile has already been saved.
+        switchMap(() => {
+          if (!file) {
+            return of(null);
+          }
+          this.setupStatus.set('Uploading and analyzing your resume…');
+          return this.resumeService.importResumes([file]).pipe(catchError(() => of(null)));
+        }),
+        switchMap(() => {
+          this.setupStatus.set('Searching all job providers for your matches…');
+          return this.jobService.synchronize().pipe(catchError(() => of(null)));
+        }),
+      )
       .subscribe(() => {
+        this.setupStatus.set('');
         void this.router.navigate(['/']);
       });
   }

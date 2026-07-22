@@ -14,6 +14,8 @@ public sealed class Job : SoftDeleteEntity
         Title = string.Empty;
         Slug = string.Empty;
         Description = string.Empty;
+        Language = string.Empty;
+        ContentHash = string.Empty;
         Location = Location.Create("United States", null, null, RemoteType.Onsite);
         Salary = SalaryRange.Create(null, null);
     }
@@ -167,6 +169,12 @@ public sealed class Job : SoftDeleteEntity
         SourceMetadataJson = sourceMetadataJson;
         ContentHash = newContentHash;
         LastSynchronizedAt = DateTimeOffset.UtcNow;
+
+        // Seen in the feed with new content — live again if it had been deactivated.
+        if (Status == JobStatus.Expired)
+        {
+            Status = JobStatus.Active;
+        }
     }
 
     public void Deactivate()
@@ -176,6 +184,14 @@ public sealed class Job : SoftDeleteEntity
 
     public void SyncTouch()
     {
+        // A job seen in the feed is live again. Without this, a posting that was deactivated
+        // for dropping out of the feed and later returned would stay Expired forever, because
+        // nothing else resets the status on the reappearance path.
+        if (Status == JobStatus.Expired)
+        {
+            Status = JobStatus.Active;
+        }
+
         LastSynchronizedAt = DateTimeOffset.UtcNow;
     }
 

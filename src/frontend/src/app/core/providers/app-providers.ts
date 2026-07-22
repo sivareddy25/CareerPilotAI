@@ -10,6 +10,7 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { routes } from '../../app.routes';
+import { apiBaseUrlInterceptor } from '../interceptors/api-base-url.interceptor';
 import { requestIdInterceptor } from '../interceptors/request-id.interceptor';
 import { authenticationInterceptor } from '../interceptors/authentication.interceptor';
 import { loadingInterceptor } from '../interceptors/loading.interceptor';
@@ -23,6 +24,9 @@ export function provideCoreInfrastructure(): Array<Provider | EnvironmentProvide
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withInterceptors([
+        // Outermost: rewrites relative /api paths onto the backend origin before any other
+        // interceptor inspects the request.
+        apiBaseUrlInterceptor,
         requestIdInterceptor,
         loadingInterceptor,
         errorInterceptor,

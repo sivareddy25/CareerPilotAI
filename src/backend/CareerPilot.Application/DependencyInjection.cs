@@ -35,6 +35,9 @@ public static class DependencyInjection
 
         services.AddScoped<AuthenticationSessionFactory>();
 
+        // Stateless and pure, so a singleton — no per-request state to isolate.
+        services.AddSingleton<Jobs.Matching.IJobMatchScoringService, Jobs.Matching.JobMatchScoringService>();
+
         return services;
     }
 

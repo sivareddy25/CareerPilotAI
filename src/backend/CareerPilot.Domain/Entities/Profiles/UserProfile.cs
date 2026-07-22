@@ -1,4 +1,5 @@
 using CareerPilot.Domain.Entities.Identity;
+using CareerPilot.Domain.Jobs;
 
 namespace CareerPilot.Domain.Entities.Profiles;
 
@@ -21,6 +22,8 @@ namespace CareerPilot.Domain.Entities.Profiles;
 /// </remarks>
 public sealed class UserProfile : SoftDeleteEntity
 {
+    private readonly List<ProfileSkill> _skills = [];
+
     private UserProfile()
     {
         Preferences = UserPreferences.CreateDefault();
@@ -75,6 +78,26 @@ public sealed class UserProfile : SoftDeleteEntity
     public string? WorkAuthorization { get; private set; }
     public string? PreferredSalary { get; private set; }
     public string? TargetJobTitles { get; private set; }
+
+    // Structured career data — the machine-readable half of the profile the match-scoring
+    // engine reads. Kept alongside the free-text fields above (PreferredSalary, TargetJobTitles)
+    // rather than replacing them: those still back the human-facing profile screen, while these
+    // are what the scorer can actually compute against.
+
+    /// <summary>Total years of professional experience. Drives the seniority-fit component.</summary>
+    public int? YearsOfExperience { get; private set; }
+
+    /// <summary>Desired annual salary as a number, so it can be compared to a job's range.</summary>
+    public decimal? DesiredSalaryAmount { get; private set; }
+
+    /// <summary>ISO 4217 currency for <see cref="DesiredSalaryAmount"/>, upper case.</summary>
+    public string? DesiredSalaryCurrency { get; private set; }
+
+    public EmploymentType? PreferredEmploymentType { get; private set; }
+
+    public RemoteType? PreferredRemoteType { get; private set; }
+
+    public IReadOnlyCollection<ProfileSkill> Skills => _skills.AsReadOnly();
 
     public UserPreferences Preferences { get; private set; }
 
@@ -137,6 +160,50 @@ public sealed class UserProfile : SoftDeleteEntity
         PreferredSalary = Normalize(preferredSalary);
         TargetJobTitles = Normalize(targetJobTitles);
         IsOnboardingCompleted = true;
+    }
+
+    /// <summary>
+    /// Replaces the structured career data used for job matching.
+    /// </summary>
+    /// <remarks>
+    /// Full replacement, matching <see cref="UpdateDetails"/>: the career form submits the
+    /// whole set, so an empty skills list means "cleared", not "unchanged". Skills are rebuilt
+    /// rather than merged because reconciling additions and removals against the existing rows
+    /// would be more code for no behavioural gain — the collection is small.
+    /// </remarks>
+    public void SetCareerProfile(
+        int? yearsOfExperience,
+        decimal? desiredSalaryAmount,
+        string? desiredSalaryCurrency,
+        EmploymentType? preferredEmploymentType,
+        RemoteType? preferredRemoteType,
+        string? targetJobTitles,
+        IEnumerable<(string Name, int? Years)> skills)
+    {
+        YearsOfExperience = yearsOfExperience is >= 0 ? yearsOfExperience : null;
+        DesiredSalaryAmount = desiredSalaryAmount is > 0 ? desiredSalaryAmount : null;
+        DesiredSalaryCurrency = Normalize(desiredSalaryCurrency)?.ToUpperInvariant();
+        PreferredEmploymentType = preferredEmploymentType;
+        PreferredRemoteType = preferredRemoteType;
+        TargetJobTitles = Normalize(targetJobTitles);
+
+        _skills.Clear();
+        foreach (var (name, years) in skills)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            // De-duplicate case-insensitively so "SQL" and "sql" do not both count toward a
+            // skills-overlap score and inflate it.
+            if (_skills.Any(s => string.Equals(s.Name, name.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            _skills.Add(new ProfileSkill(Id, name, years));
+        }
     }
 
     public void SetProfilePicture(string url)

@@ -4,6 +4,7 @@ export * from './icon/icon.component';
 export * from './card/card.component';
 export * from './avatar/avatar.component';
 export * from './badge/badge.component';
+export * from './match-score/match-score.component';
 export * from './chip/chip.component';
 export * from './tabs/tabs.component';
 export * from './accordion/accordion.component';

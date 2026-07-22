@@ -6,6 +6,7 @@ import {
   BadgeComponent,
   ChipComponent,
   IconComponent,
+  MatchScoreComponent,
 } from '../../../shared/components';
 import { JobDto, RemoteType } from '../../../core/models/job.models';
 
@@ -19,6 +20,7 @@ import { JobDto, RemoteType } from '../../../core/models/job.models';
     BadgeComponent,
     ChipComponent,
     IconComponent,
+    MatchScoreComponent,
   ],
   template: `
     <app-card [hoverable]="true" class="job-card-wrapper">
@@ -33,9 +35,12 @@ import { JobDto, RemoteType } from '../../../core/models/job.models';
           </div>
         </div>
 
-        <app-badge [variant]="getRemoteBadgeVariant(job().location.remoteType)">
-          {{ job().location.displayLocation }}
-        </app-badge>
+        <div class="header-badges">
+          <app-match-score [score]="job().matchScore" [summary]="job().matchSummary" />
+          <app-badge [variant]="getRemoteBadgeVariant(job().location.remoteType)">
+            {{ job().location.displayLocation }}
+          </app-badge>
+        </div>
       </div>
 
       <h3 class="job-title">{{ job().title }}</h3>
@@ -49,6 +54,13 @@ import { JobDto, RemoteType } from '../../../core/models/job.models';
       <p class="job-description-snippet">
         {{ job().description }}
       </p>
+
+      @if (job().matchedSkills && job().matchedSkills!.length > 0) {
+        <div class="matched-skills">
+          <app-icon name="check" size="xs" />
+          <span>Your skills: {{ job().matchedSkills!.join(', ') }}</span>
+        </div>
+      }
 
       <div class="skills-chips">
         @for (skill of job().skills; track skill) {
@@ -75,6 +87,20 @@ import { JobDto, RemoteType } from '../../../core/models/job.models';
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: var(--space-3);
+    }
+    .header-badges {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--space-1);
+    }
+    .matched-skills {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-caption);
+      color: var(--color-success, #16a34a);
+      margin: 0 0 var(--space-3) 0;
     }
     .company-meta {
       display: flex;

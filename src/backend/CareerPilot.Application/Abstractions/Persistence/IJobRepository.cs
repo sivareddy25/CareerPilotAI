@@ -24,6 +24,21 @@ public interface IJobRepository
     Task AddAsync(Job job, CancellationToken cancellationToken = default);
     void Update(Job job);
     Task<int> DeactivateExpiredJobsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deactivates a provider's active jobs whose external IDs are absent from
+    /// <paramref name="seenExternalIds"/> — the postings the provider no longer lists.
+    /// </summary>
+    /// <remarks>
+    /// Call only after a successful fetch. A provider that returned an empty set because it
+    /// failed would, through this method, deactivate everything it owns; that is tolerable
+    /// because deactivation is reversible (a returning posting reactivates on the next sync)
+    /// but must not be triggered by a fetch that never really happened.
+    /// </remarks>
+    Task<int> DeactivateMissingAsync(
+        JobProviderKind source,
+        IReadOnlyCollection<string> seenExternalIds,
+        CancellationToken cancellationToken = default);
 }
 
 public interface ICompanyRepository

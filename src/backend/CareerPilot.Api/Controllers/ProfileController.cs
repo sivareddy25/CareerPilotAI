@@ -3,10 +3,12 @@ using CareerPilot.Application.Authentication.Commands.ChangePassword;
 using CareerPilot.Application.Profiles.Commands.DeactivateAccount;
 using CareerPilot.Application.Profiles.Commands.DeleteAccount;
 using CareerPilot.Application.Profiles.Commands.DeleteProfileImage;
+using CareerPilot.Application.Profiles.Commands.UpdateCareerProfile;
 using CareerPilot.Application.Profiles.Commands.UpdatePreferences;
 using CareerPilot.Application.Profiles.Commands.UpdateProfile;
 using CareerPilot.Application.Profiles.Commands.UploadProfileImage;
 using CareerPilot.Application.Profiles.Models;
+using CareerPilot.Application.Profiles.Queries.GetCareerProfile;
 using CareerPilot.Application.Profiles.Queries.GetProfile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -61,6 +63,33 @@ public sealed class ProfileController : BaseApiController
         var profile = await Commands.Send(command, cancellationToken);
 
         return Ok(profile);
+    }
+
+    /// <summary>Returns the caller's structured career profile used for job matching.</summary>
+    [HttpGet("career")]
+    [ProducesResponseType(typeof(CareerProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<CareerProfileDto>> GetCareer(CancellationToken cancellationToken)
+    {
+        var career = await Queries.Query(new GetCareerProfileQuery(), cancellationToken);
+
+        Response.Headers.CacheControl = "no-store, private";
+
+        return Ok(career);
+    }
+
+    /// <summary>Replaces the caller's career profile (skills, experience, salary, preferences).</summary>
+    [HttpPut("career")]
+    [ProducesResponseType(typeof(CareerProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<CareerProfileDto>> UpdateCareer(
+        [FromBody] UpdateCareerProfileCommand command,
+        CancellationToken cancellationToken)
+    {
+        var career = await Commands.Send(command, cancellationToken);
+
+        return Ok(career);
     }
 
     /// <summary>Updates display and notification preferences.</summary>

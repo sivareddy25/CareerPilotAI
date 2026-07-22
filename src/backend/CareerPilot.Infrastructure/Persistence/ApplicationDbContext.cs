@@ -51,6 +51,11 @@ public class ApplicationDbContext : DbContext
         configurationBuilder
             .Properties<DateTime>()
             .HaveConversion<UtcDateTimeConverter>();
+
+        // Same for DateTimeOffset, which Npgsql rejects outright unless the offset is zero.
+        configurationBuilder
+            .Properties<DateTimeOffset>()
+            .HaveConversion<UtcDateTimeOffsetConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
